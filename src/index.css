@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Promofy Design System — dark, vibrant, bold */
+@layer base {
+  :root {
+    /* Core dark palette */
+    --background: 232 40% 6%;          /* #0a0a14-ish blue-black */
+    --foreground: 0 0% 100%;
+
+    --card: 232 35% 9%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 232 35% 9%;
+    --popover-foreground: 0 0% 100%;
+
+    /* Brand: cyan/blue accent #0143A9 */
+    --primary: 213 98% 33%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 200 100% 55%;
+
+    /* Yellow accent (logo % tag) */
+    --accent: 48 100% 55%;
+    --accent-foreground: 232 40% 6%;
+
+    --secondary: 232 30% 14%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 232 25% 16%;
+    --muted-foreground: 220 12% 72%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 230 25% 18%;
+    --input: 230 25% 18%;
+    --ring: 200 100% 55%;
+
+    /* WhatsApp green */
+    --whatsapp: 142 71% 45%;
+    --whatsapp-foreground: 0 0% 100%;
+
+    /* WhatsApp Channel teal (#128c7e) */
+    --whatsapp-channel: 173 76% 31%;
+    --whatsapp-channel-foreground: 0 0% 100%;
+
+    --radius: 1rem;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(213 98% 33%), hsl(200 100% 55%));
+    --gradient-yellow: linear-gradient(135deg, hsl(48 100% 60%), hsl(40 100% 50%));
+    --gradient-whatsapp: linear-gradient(135deg, hsl(142 71% 45%), hsl(150 80% 38%));
+    --gradient-whatsapp-channel: linear-gradient(135deg, hsl(173 76% 31%), hsl(173 80% 24%));
+    --gradient-blue: linear-gradient(135deg, hsl(213 98% 33%), hsl(210 95% 50%));
+    --gradient-text: linear-gradient(90deg, hsl(200 100% 60%), hsl(190 100% 70%), hsl(48 100% 60%));
+
+    /* Shadows / glows */
+    --glow-cyan: 0 0 40px hsl(200 100% 55% / 0.45);
+    --glow-yellow: 0 0 40px hsl(48 100% 55% / 0.45);
+    --glow-green: 0 10px 40px hsl(142 71% 45% / 0.45);
+    --glow-channel: 0 10px 40px hsl(173 76% 31% / 0.5);
+    --glow-blue: 0 10px 40px hsl(213 98% 45% / 0.5);
+
+    --sidebar-background: 232 40% 6%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 213 98% 33%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 232 30% 14%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 230 25% 18%;
+    --sidebar-ring: 200 100% 55%;
+  }
+
+  .dark {
+    /* Same as :root — Promofy is dark-only */
+    --background: 232 40% 6%;
+    --foreground: 0 0% 100%;
+    --card: 232 35% 9%;
+    --card-foreground: 0 0% 100%;
+    --popover: 232 35% 9%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 213 98% 33%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 232 30% 14%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 232 25% 16%;
+    --muted-foreground: 220 12% 72%;
+    --accent: 48 100% 55%;
+    --accent-foreground: 232 40% 6%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 25% 18%;
+    --input: 230 25% 18%;
+    --ring: 200 100% 55%;
+  }
+}
+
+/* Fallback font metrics matched to Inter to reduce CLS while web font loads */
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial");
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Inter', 'Inter Fallback', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, hsl(213 98% 33% / 0.35), transparent 60%);
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .text-gradient-hero {
+    background: var(--gradient-text);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradient-shift 6s ease-in-out infinite;
+  }
+
+  .glow-cyan { box-shadow: var(--glow-cyan); }
+  .glow-yellow { box-shadow: var(--glow-yellow); }
+  .glow-green { box-shadow: var(--glow-green); }
+  .glow-blue { box-shadow: var(--glow-blue); }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float { animation: float 4s ease-in-out infinite; }
+
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee-scroll 28s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-float,
+  .text-gradient-hero {
+    animation: none !important;
+  }
+}
+
+/* Skip rendering work for off-screen sections */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 600px;
+}
