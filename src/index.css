@@ -163,6 +163,13 @@
   backface-visibility: hidden;
 }
 
+/* Mobile (< sm): dobro da velocidade do carrossel de marcas — desktop permanece 28s */
+@media (max-width: 639.98px) {
+  .animate-marquee {
+    animation-duration: 14s;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee,
   .animate-float,
