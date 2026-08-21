@@ -28,25 +28,30 @@ const WhatsAppGlyph = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// Esta tela é a raiz do site, então o head aqui repete EXATAMENTE o que está
+// escrito no index.html. É de propósito: o GitHub Pages entrega o index.html
+// estático, e quem não roda JS (parte dos crawlers, preview de link) só vê
+// aquilo. Se os dois divergirem, cada visitante vê um texto diferente.
+// Mudou aqui? Mudar no index.html também.
 const LandingSimplesHead = () => (
   <Helmet>
-    <title>Promofy — entre no grupo de ofertas</title>
+    <title>Promofy — Ofertas e Cupons que Valem a Pena</title>
     <meta
       name="description"
-      content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam, e você sai quando quiser."
+      content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
     />
-    <link rel="canonical" href="https://apromofy.online/grupo" />
-    <meta property="og:title" content="Promofy — entre no grupo de ofertas" />
+    <link rel="canonical" href="https://apromofy.online/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://apromofy.online/" />
+    <meta property="og:title" content="Promofy — Ofertas e Cupons que Valem a Pena" />
     <meta
       property="og:description"
-      content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam."
+      content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
     />
-    <meta property="og:url" content="https://apromofy.online/grupo" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:title" content="Promofy — entre no grupo de ofertas" />
+    <meta name="twitter:title" content="Promofy — Ofertas e Cupons que Valem a Pena" />
     <meta
       name="twitter:description"
-      content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam."
+      content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
     />
   </Helmet>
 );

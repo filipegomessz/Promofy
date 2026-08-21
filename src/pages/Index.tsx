@@ -46,11 +46,14 @@ const faqs = [
   },
 ];
 
-// A home precisa do seu próprio <Helmet> com os MESMOS valores que estão no
-// index.html: as tags de lá agora são `data-rh`, ou seja, o Helmet passou a
-// gerenciá-las. Sem isto, voltar de /termos para / (navegação client-side)
-// apagaria description/canonical/og da home ao desmontar o Helmet da outra
-// página. Mudou algo aqui? Mudar no index.html também.
+// ESTA PÁGINA ESTÁ FORA DO AR: desde 21/08/2026 a raiz do site é a landing
+// simples (src/pages/LandingSimples.tsx) e este arquivo ficou sem rota, de
+// propósito, guardado para o dia em que voltar a ser usado. Ver o comentário
+// no topo de src/App.tsx para religá-la.
+//
+// O <Helmet> abaixo assume que esta página é a RAIZ (canonical "/"). Se ela
+// voltar em outro caminho, corrigir canonical e og:url — e lembrar que as
+// tags de SEO do index.html são `data-rh`, ou seja, o Helmet as substitui.
 const IndexHead = () => (
   <Helmet>
     <title>Promofy — Ofertas e Cupons que Valem a Pena</title>
