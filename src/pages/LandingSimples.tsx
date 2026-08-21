@@ -4,6 +4,14 @@ import { CircleCheckBig, Users } from "lucide-react";
 import promofyAvatar from "@/assets/promofy-avatar.jpg";
 import { WHATSAPP_GROUP, trackLead } from "@/lib/lead";
 
+// ATENÇÃO: o <Helmet> abaixo NÃO está surtindo efeito hoje — o
+// react-helmet-async 3.0.0 depende do hoisting nativo do React 19 e este
+// projeto está no React 18, então nenhuma tag chega ao <head> em nenhuma
+// página do site (/termos e /privacidade também servem o título da home).
+// Por isso nada visual desta tela depende do Helmet: o fundo claro e as
+// animações vêm de index.css. Quando o helmet for consertado, o head aqui
+// passa a valer sozinho.
+
 const BENEFITS = [
   "Cupons e achadinhos todo dia",
   "Só ofertas com curadoria",
@@ -43,29 +51,17 @@ const LandingSimplesHead = () => (
       name="twitter:description"
       content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam."
     />
-    {/* Esta rota é clara, ao contrário do resto do site (tokens dark-only). */}
-    <style>{`
-      body { background-color: #F8FAFC !important; background-image: none !important; }
-      @keyframes lp-cta-pulse {
-        0%   { transform: scale(1); }
-        30%  { transform: scale(1.035); }
-        45%  { transform: scale(1); }
-        60%  { transform: scale(1.018); }
-        100% { transform: scale(1); }
-      }
-      @keyframes lp-aviso-in {
-        0%   { opacity: 0; transform: translateY(30px) scale(0.9); }
-        80%  { opacity: 1; transform: translateY(-5px) scale(1.02); }
-        100% { opacity: 1; transform: translateY(0) scale(1); }
-      }
-      .lp-cta { animation: lp-cta-pulse 2s ease-in-out infinite; }
-      .lp-aviso { animation: lp-aviso-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) both; }
-      @media (prefers-reduced-motion: reduce) {
-        .lp-cta, .lp-aviso { animation: none; }
-      }
-    `}</style>
   </Helmet>
 );
+
+// O resto do site é escuro; enquanto esta rota estiver montada o body fica claro.
+// A regra `body.lp-clara` mora em index.css, junto das animações `.lp-*`.
+const useBodyClaro = () => {
+  useEffect(() => {
+    document.body.classList.add("lp-clara");
+    return () => document.body.classList.remove("lp-clara");
+  }, []);
+};
 
 const AvisoEntrada = () => {
   const [indice, setIndice] = useState(0);
@@ -102,86 +98,89 @@ const AvisoEntrada = () => {
   );
 };
 
-const LandingSimples = () => (
-  <>
-    <LandingSimplesHead />
-    <div className="min-h-[100dvh] w-full overflow-x-hidden bg-[#F8FAFC] bg-[radial-gradient(ellipse_90%_40%_at_50%_-6%,rgba(1,67,169,0.13),transparent_62%)] px-[15px] pb-24 pt-10 text-[#0F172A] sm:px-5 sm:pt-[50px]">
-      <main className="mx-auto flex w-full max-w-[360px] flex-col items-center text-center sm:max-w-[480px]">
-        <p className="mb-6 rounded-[30px] border border-[rgba(1,67,169,0.3)] bg-white px-5 py-1.5 text-[22px] font-black italic uppercase tracking-[-0.5px] text-[#0143A9] shadow-[0_4px_15px_rgba(0,0,0,0.05)]">
-          Promofy
-        </p>
+const LandingSimples = () => {
+  useBodyClaro();
 
-        <div className="relative mb-7">
-          <div className="h-[150px] w-[150px] rounded-full border-[3px] border-[#0143A9] bg-white p-[5px] shadow-[0_10px_30px_rgba(1,67,169,0.16),0_0_0_4px_#FFFFFF]">
-            <img
-              src={promofyAvatar}
-              alt="Promofy"
-              width="140"
-              height="140"
-              fetchPriority="high"
-              decoding="async"
-              className="block h-full w-full rounded-full object-cover"
-            />
-          </div>
-          <div className="absolute bottom-[5px] right-[5px] flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-[0_4px_10px_rgba(0,0,0,0.15)]">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <circle cx="12" cy="12" r="10" fill="#21C45D" />
-              <path
-                d="M16 9L10.5 14.5L8 12"
-                stroke="#FFFFFF"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+  return (
+    <>
+      <LandingSimplesHead />
+      <div className="min-h-[100dvh] w-full overflow-x-hidden bg-[#F8FAFC] bg-[radial-gradient(ellipse_90%_40%_at_50%_-6%,rgba(1,67,169,0.13),transparent_62%)] px-[15px] pb-24 pt-10 text-[#0F172A] sm:px-5 sm:pt-[50px]">
+        <main className="mx-auto flex w-full max-w-[360px] flex-col items-center text-center sm:max-w-[480px]">
+          <p className="mb-6 rounded-[30px] border border-[rgba(1,67,169,0.3)] bg-white px-5 py-1.5 text-[22px] font-black italic uppercase tracking-[-0.5px] text-[#0143A9] shadow-[0_4px_15px_rgba(0,0,0,0.05)]">
+            Promofy
+          </p>
+
+          <div className="relative mb-7">
+            <div className="h-[150px] w-[150px] rounded-full border-[3px] border-[#0143A9] bg-white p-[5px] shadow-[0_10px_30px_rgba(1,67,169,0.16),0_0_0_4px_#FFFFFF]">
+              <img
+                src={promofyAvatar}
+                alt="Promofy"
+                width="140"
+                height="140"
+                decoding="async"
+                className="block h-full w-full rounded-full object-cover"
               />
-            </svg>
+            </div>
+            <div className="absolute bottom-[5px] right-[5px] flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-[0_4px_10px_rgba(0,0,0,0.15)]">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <circle cx="12" cy="12" r="10" fill="#21C45D" />
+                <path
+                  d="M16 9L10.5 14.5L8 12"
+                  stroke="#FFFFFF"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
           </div>
-        </div>
 
-        <h1 className="mb-4 text-[26px] font-black leading-[1.25] tracking-[-0.5px] text-pretty sm:text-[28px]">
-          Eu encontro as <span className="font-black">melhores ofertas</span> da internet pra você.
-        </h1>
+          <h1 className="mb-4 text-[26px] font-black leading-[1.25] tracking-[-0.5px] text-pretty sm:text-[28px]">
+            Eu encontro as <span className="font-black">melhores ofertas</span> da internet pra você.
+          </h1>
 
-        <div className="mb-[35px] rounded-[30px] border border-[#E2E8F0] bg-white px-5 py-2 text-sm font-semibold text-[#64748B] shadow-[0_4px_15px_rgba(0,0,0,0.03)]">
-          Chegou a hora de economizar 💰
-        </div>
+          <div className="mb-[35px] rounded-[30px] border border-[#E2E8F0] bg-white px-5 py-2 text-sm font-semibold text-[#64748B] shadow-[0_4px_15px_rgba(0,0,0,0.03)]">
+            Chegou a hora de economizar 💰
+          </div>
 
-        <ul className="mb-[45px] flex w-full max-w-[400px] list-none flex-col items-start gap-3.5">
-          {BENEFITS.map((texto) => (
-            <li
-              key={texto}
-              className="flex items-center gap-3.5 text-left text-[15px] font-semibold sm:text-base"
+          <ul className="mb-[45px] flex w-full max-w-[400px] list-none flex-col items-start gap-3.5">
+            {BENEFITS.map((texto) => (
+              <li
+                key={texto}
+                className="flex items-center gap-3.5 text-left text-[15px] font-semibold sm:text-base"
+              >
+                <CircleCheckBig className="h-5 w-5 shrink-0 text-[#21C45D]" strokeWidth={2} />
+                <span>{texto}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mb-[30px] w-full max-w-[400px]">
+            <a
+              href={WHATSAPP_GROUP}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => trackLead(e, WHATSAPP_GROUP)}
+              className="lp-cta flex w-full items-center justify-center gap-3 rounded-2xl bg-[linear-gradient(135deg,#21C45D_0%,#13AE61_100%)] px-5 py-[22px] text-[19px] font-extrabold uppercase tracking-[0.5px] text-white shadow-[0_10px_40px_rgba(33,196,93,0.45),inset_0_-5px_0_rgba(0,0,0,0.18)] sm:text-[21px]"
             >
-              <CircleCheckBig className="h-5 w-5 shrink-0 text-[#21C45D]" strokeWidth={2} />
-              <span>{texto}</span>
-            </li>
-          ))}
-        </ul>
+              <WhatsAppGlyph className="h-7 w-7 shrink-0" />
+              Quero economizar
+            </a>
+          </div>
 
-        <div className="mb-[30px] w-full max-w-[400px]">
-          <a
-            href={WHATSAPP_GROUP}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => trackLead(e, WHATSAPP_GROUP)}
-            className="lp-cta flex w-full items-center justify-center gap-3 rounded-2xl bg-[linear-gradient(135deg,#21C45D_0%,#13AE61_100%)] px-5 py-[22px] text-[19px] font-extrabold uppercase tracking-[0.5px] text-white shadow-[0_10px_40px_rgba(33,196,93,0.45),inset_0_-5px_0_rgba(0,0,0,0.18)] sm:text-[21px]"
-          >
-            <WhatsAppGlyph className="h-7 w-7 shrink-0" />
-            Quero economizar
-          </a>
-        </div>
+          <div className="flex w-full max-w-[400px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-[#F1F5F9] bg-white px-6 py-3.5 text-[13px] text-[#64748B] shadow-[0_4px_15px_rgba(0,0,0,0.02)] sm:flex-row sm:gap-2.5 sm:rounded-[50px] sm:py-3 sm:text-sm">
+            <Users className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
+            <span>
+              Mais de <strong className="font-bold text-[#0F172A]">30 mil pessoas</strong> já
+              economizam todo dia no grupo
+            </span>
+          </div>
+        </main>
 
-        <div className="flex w-full max-w-[400px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-[#F1F5F9] bg-white px-6 py-3.5 text-[13px] text-[#64748B] shadow-[0_4px_15px_rgba(0,0,0,0.02)] sm:flex-row sm:gap-2.5 sm:rounded-[50px] sm:py-3 sm:text-sm">
-          <Users className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
-          <span>
-            Mais de <strong className="font-bold text-[#0F172A]">30 mil pessoas</strong> já
-            economizam todo dia no grupo
-          </span>
-        </div>
-      </main>
-
-      <AvisoEntrada />
-    </div>
-  </>
-);
+        <AvisoEntrada />
+      </div>
+    </>
+  );
+};
 
 export default LandingSimples;
