@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import {
   Tag,
@@ -13,6 +14,7 @@ import {
 import promofyLogo from "@/assets/promofy-logo.webp";
 import promofyFooterLogo from "@/assets/promofy-footer-logo.webp";
 import PartnersMarquee from "@/components/PartnersMarquee";
+import { WHATSAPP_GROUP, trackLead } from "@/lib/lead";
 import whatsappIcon from "@/assets/whatsapp-icon.webp";
 import {
   Accordion,
@@ -44,56 +46,36 @@ const faqs = [
   },
 ];
 
-declare global {
-  interface Window {
-    fbq?: (...args: unknown[]) => void;
-  }
-}
-
-const WHATSAPP_GROUP =
-  "https://chat.whatsapp.com/CeIkFA6dIzIKN91j5dzS7o";
-const WHATSAPP_CHANNEL =
-  "https://whatsapp.com/channel/0029Vb7qoOCFXUuQyXWHEV0U";
-
-// Contador global para auditoria — garante que cada clique dispare exatamente 1 Lead
-let __leadFireCount = 0;
-
-const trackLead = (
-  e?: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>,
-  href?: string,
-) => {
-  const hasFbq = typeof window !== "undefined" && typeof window.fbq === "function";
-  let eventID: string | null = null;
-  let firedCount = 0;
-
-  if (hasFbq) {
-    eventID = `lead_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    window.fbq!("track", "Lead", { content_name: href ?? "unknown" }, { eventID });
-    firedCount = 1;
-    __leadFireCount += 1;
-  }
-
-  // Pixel Helper / verificação no console
-  // Esperado: "fired=1" para cada clique, antes do redirect ao WhatsApp.
-  // eslint-disable-next-line no-console
-  console.info(
-    `[MetaPixel] Lead fired=${firedCount} eventID=${eventID ?? "n/a"} totalSession=${__leadFireCount} href=${href ?? "n/a"} fbqLoaded=${hasFbq}`,
-  );
-
-  if (!hasFbq) {
-    // eslint-disable-next-line no-console
-    console.warn("[MetaPixel] fbq não está disponível — verifique o script do Pixel no index.html");
-  }
-
-  // Garante que o evento seja enviado antes de navegar (especialmente no mobile,
-  // onde abrir o WhatsApp pode descartar requisições pendentes).
-  if (e && href) {
-    e.preventDefault();
-    window.setTimeout(() => {
-      window.open(href, "_blank", "noopener,noreferrer");
-    }, 250);
-  }
-};
+// ESTA PÁGINA ESTÁ FORA DO AR: desde 21/08/2026 a raiz do site é a landing
+// simples (src/pages/LandingSimples.tsx) e este arquivo ficou sem rota, de
+// propósito, guardado para o dia em que voltar a ser usado. Ver o comentário
+// no topo de src/App.tsx para religá-la.
+//
+// O <Helmet> abaixo assume que esta página é a RAIZ (canonical "/"). Se ela
+// voltar em outro caminho, corrigir canonical e og:url — e lembrar que as
+// tags de SEO do index.html são `data-rh`, ou seja, o Helmet as substitui.
+const IndexHead = () => (
+  <Helmet>
+    <title>Promofy — Ofertas e Cupons que Valem a Pena</title>
+    <meta
+      name="description"
+      content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
+    />
+    <link rel="canonical" href="https://apromofy.online/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://apromofy.online/" />
+    <meta property="og:title" content="Promofy — Ofertas e Cupons que Valem a Pena" />
+    <meta
+      property="og:description"
+      content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
+    />
+    <meta name="twitter:title" content="Promofy — Ofertas e Cupons que Valem a Pena" />
+    <meta
+      name="twitter:description"
+      content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
+    />
+  </Helmet>
+);
 
 // TikTok icon (lucide doesn't ship one)
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -144,6 +126,7 @@ const benefits = [
 const Index = () => {
   return (
     <div className="min-h-screen w-full overflow-x-hidden">
+      <IndexHead />
       {/* Header */}
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 pt-6 sm:px-8">
         <a href="/" className="flex items-center gap-2.5">

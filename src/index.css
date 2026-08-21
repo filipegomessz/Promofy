@@ -170,10 +170,36 @@
   }
 }
 
+/* Landing simples (/grupo): página clara dentro de um app de tokens dark-only.
+   A classe entra no <body> enquanto a rota está montada. */
+body.lp-clara {
+  background-color: #f8fafc;
+  background-image: none;
+}
+
+@keyframes lp-cta-pulse {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.035); }
+  45% { transform: scale(1); }
+  60% { transform: scale(1.018); }
+  100% { transform: scale(1); }
+}
+
+@keyframes lp-aviso-in {
+  0% { opacity: 0; transform: translateY(30px) scale(0.9); }
+  80% { opacity: 1; transform: translateY(-5px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.lp-cta { animation: lp-cta-pulse 2s ease-in-out infinite; }
+.lp-aviso { animation: lp-aviso-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) both; }
+
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee,
   .animate-float,
-  .text-gradient-hero {
+  .text-gradient-hero,
+  .lp-cta,
+  .lp-aviso {
     animation: none !important;
   }
 }

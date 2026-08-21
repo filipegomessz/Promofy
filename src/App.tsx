@@ -4,7 +4,13 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
+// A raiz é a landing simples. A home antiga (src/pages/Index.tsx — hero, FAQ,
+// esteira de marcas, rodapé) continua no repo, íntegra e sem rota: para voltar
+// a usá-la basta reimportá-la aqui e devolver a rota, mandando a landing para
+// outro caminho. Nada mais depende dela.
+//   import Index from "./pages/Index.tsx";
+//   <Route path="/" element={<Index />} />
+import LandingSimples from "./pages/LandingSimples.tsx";
 
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const Terms = lazy(() => import("./pages/Terms.tsx"));
@@ -21,7 +27,7 @@ const App = () => (
       <BrowserRouter>
         <Suspense fallback={null}>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<LandingSimples />} />
             <Route path="/termos" element={<Terms />} />
             <Route path="/privacidade" element={<Privacy />} />
             <Route path="/contato" element={<Contact />} />
