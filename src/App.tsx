@@ -10,6 +10,7 @@ const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const Terms = lazy(() => import("./pages/Terms.tsx"));
 const Privacy = lazy(() => import("./pages/Privacy.tsx"));
 const Contact = lazy(() => import("./pages/Contact.tsx"));
+const LandingSimples = lazy(() => import("./pages/LandingSimples.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/termos" element={<Terms />} />
             <Route path="/privacidade" element={<Privacy />} />
             <Route path="/contato" element={<Contact />} />
+            <Route path="/grupo" element={<LandingSimples />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
