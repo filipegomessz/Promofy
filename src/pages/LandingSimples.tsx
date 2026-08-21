@@ -2,20 +2,17 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { CircleCheckBig, Users } from "lucide-react";
 import promofyAvatar from "@/assets/promofy-avatar.jpg";
-import { WHATSAPP_GROUP, trackLead } from "@/lib/lead";
+import { WHATSAPP_GROUP_LANDING, trackLead } from "@/lib/lead";
 
-// ATENÇÃO: o <Helmet> abaixo NÃO está surtindo efeito hoje — o
-// react-helmet-async 3.0.0 depende do hoisting nativo do React 19 e este
-// projeto está no React 18, então nenhuma tag chega ao <head> em nenhuma
-// página do site (/termos e /privacidade também servem o título da home).
-// Por isso nada visual desta tela depende do Helmet: o fundo claro e as
-// animações vêm de index.css. Quando o helmet for consertado, o head aqui
-// passa a valer sozinho.
+// Nada de VISUAL nesta tela depende do <Helmet>: o fundo claro e as animações
+// moram em index.css. É de propósito — o Helmet só aplica no `requestAnimation-
+// Frame` seguinte (`defer` é true por padrão), e CSS chegando um quadro depois
+// significaria a página piscando escura antes de clarear.
 
 const BENEFITS = [
   "Cupons e achadinhos todo dia",
-  "Só ofertas com curadoria",
-  "Sai quando quiser, sem spam",
+  "Só ofertas selecionadas",
+  "Pode sair quando quiser",
 ];
 
 // Aviso de prova social: os nomes são FICTÍCIOS e rodam em loop, como no
@@ -157,10 +154,10 @@ const LandingSimples = () => {
 
           <div className="mb-[30px] w-full max-w-[400px]">
             <a
-              href={WHATSAPP_GROUP}
+              href={WHATSAPP_GROUP_LANDING}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => trackLead(e, WHATSAPP_GROUP)}
+              onClick={(e) => trackLead(e, WHATSAPP_GROUP_LANDING)}
               className="lp-cta flex w-full items-center justify-center gap-3 rounded-2xl bg-[linear-gradient(135deg,#21C45D_0%,#13AE61_100%)] px-5 py-[22px] text-[19px] font-extrabold uppercase tracking-[0.5px] text-white shadow-[0_10px_40px_rgba(33,196,93,0.45),inset_0_-5px_0_rgba(0,0,0,0.18)] sm:text-[21px]"
             >
               <WhatsAppGlyph className="h-7 w-7 shrink-0" />

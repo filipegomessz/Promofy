@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import {
   Tag,
@@ -44,6 +45,34 @@ const faqs = [
     a: "Com certeza! Traga sua família e amigos para todos economizarem!",
   },
 ];
+
+// A home precisa do seu próprio <Helmet> com os MESMOS valores que estão no
+// index.html: as tags de lá agora são `data-rh`, ou seja, o Helmet passou a
+// gerenciá-las. Sem isto, voltar de /termos para / (navegação client-side)
+// apagaria description/canonical/og da home ao desmontar o Helmet da outra
+// página. Mudou algo aqui? Mudar no index.html também.
+const IndexHead = () => (
+  <Helmet>
+    <title>Promofy — Ofertas e Cupons que Valem a Pena</title>
+    <meta
+      name="description"
+      content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
+    />
+    <link rel="canonical" href="https://apromofy.online/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://apromofy.online/" />
+    <meta property="og:title" content="Promofy — Ofertas e Cupons que Valem a Pena" />
+    <meta
+      property="og:description"
+      content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
+    />
+    <meta name="twitter:title" content="Promofy — Ofertas e Cupons que Valem a Pena" />
+    <meta
+      name="twitter:description"
+      content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
+    />
+  </Helmet>
+);
 
 // TikTok icon (lucide doesn't ship one)
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -94,6 +123,7 @@ const benefits = [
 const Index = () => {
   return (
     <div className="min-h-screen w-full overflow-x-hidden">
+      <IndexHead />
       {/* Header */}
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 pt-6 sm:px-8">
         <a href="/" className="flex items-center gap-2.5">

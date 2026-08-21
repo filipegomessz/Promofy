@@ -10,6 +10,16 @@ export const WHATSAPP_GROUP = "https://chat.whatsapp.com/CeIkFA6dIzIKN91j5dzS7o"
 export const WHATSAPP_CHANNEL =
   "https://whatsapp.com/channel/0029Vb7qoOCFXUuQyXWHEV0U";
 
+/**
+ * Grupo usado SÓ pela landing de captação (/grupo).
+ * Está separado de propósito: o pedido foi trocar o link "do botão" dessa
+ * tela, e mexer em WHATSAPP_GROUP mudaria também os dois CTAs da home.
+ * Se na verdade o grupo mudou para todo mundo, apagar esta constante e
+ * atualizar WHATSAPP_GROUP acima.
+ */
+export const WHATSAPP_GROUP_LANDING =
+  "https://chat.whatsapp.com/ByF67GiEh9k3gq2XfoyUBs";
+
 // Contador global para auditoria — garante que cada clique dispare exatamente 1 Lead
 let __leadFireCount = 0;
 
