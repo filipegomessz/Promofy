@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import promofyLogo from "@/assets/promofy-logo.webp";
 
@@ -182,15 +181,15 @@ const Privacy = () => {
     <div className="min-h-screen w-full overflow-x-hidden">
       <PrivacyHead />
       <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 pt-6 sm:px-8">
-        <Link to="/" className="flex items-center gap-2.5">
+        <a href="/" className="flex items-center gap-2.5">
           <img src={promofyLogo} alt="Promofy" className="h-10 w-auto object-contain" />
           <span className="text-2xl font-black tracking-tight text-foreground">
             Promo<span className="text-foreground">fy</span>
           </span>
-        </Link>
-        <Link to="/" className="text-sm font-semibold text-muted-foreground hover:text-foreground">
+        </a>
+        <a href="/" className="text-sm font-semibold text-muted-foreground hover:text-foreground">
           ← Voltar
-        </Link>
+        </a>
       </header>
 
       <main className="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8">
