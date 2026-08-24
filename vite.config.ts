@@ -24,9 +24,11 @@ export default defineConfig(() => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          "react-vendor": ["react", "react-dom", "react/jsx-runtime"],
+          // "react-dom/client" precisa estar listado: é ele que o main.tsx
+          // importa, e sem isso o react-dom inteiro caía no chunk "router"
+          // (que ficava com 154 kB) enquanto o "react-vendor" saía com 0,06 kB.
+          "react-vendor": ["react", "react-dom", "react-dom/client", "react/jsx-runtime"],
           "router": ["react-router-dom"],
-          "query": ["@tanstack/react-query"],
           "icons": ["lucide-react"],
         },
       },

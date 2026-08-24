@@ -1,9 +1,5 @@
 import { lazy, Suspense } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
 // A raiz é a landing simples. A home antiga (src/pages/Index.tsx — hero, FAQ,
 // esteira de marcas, rodapé) continua no repo, íntegra e sem rota: para voltar
 // a usá-la basta reimportá-la aqui e devolver a rota, mandando a landing para
@@ -17,27 +13,26 @@ const Terms = lazy(() => import("./pages/Terms.tsx"));
 const Privacy = lazy(() => import("./pages/Privacy.tsx"));
 const Contact = lazy(() => import("./pages/Contact.tsx"));
 
-const queryClient = new QueryClient();
-
+// Saíram daqui, em 21/08/2026, três provedores que vieram do scaffold do
+// Lovable e que NENHUMA página usava: QueryClientProvider (nenhum useQuery no
+// projeto), <Toaster /> + <Sonner /> (ninguém dispara toast) e TooltipProvider
+// (nenhum Tooltip). Custavam ~26 kB comprimidos no primeiro carregamento de uma
+// página cuja única função é ter um botão clicado.
+// Os componentes seguem em src/components/ui/ — se um dia alguém precisar de
+// toast ou tooltip, é só montar o provedor de volta aqui.
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Suspense fallback={null}>
-          <Routes>
-            <Route path="/" element={<LandingSimples />} />
-            <Route path="/termos" element={<Terms />} />
-            <Route path="/privacidade" element={<Privacy />} />
-            <Route path="/contato" element={<Contact />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <BrowserRouter>
+    <Suspense fallback={null}>
+      <Routes>
+        <Route path="/" element={<LandingSimples />} />
+        <Route path="/termos" element={<Terms />} />
+        <Route path="/privacidade" element={<Privacy />} />
+        <Route path="/contato" element={<Contact />} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
+  </BrowserRouter>
 );
 
 export default App;

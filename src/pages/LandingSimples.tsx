@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { CircleCheckBig, Users } from "lucide-react";
-import promofyAvatar from "@/assets/promofy-avatar.jpg";
 import { WHATSAPP_GROUP_LANDING, trackLead } from "@/lib/lead";
 
 // Nada de VISUAL nesta tela depende do <Helmet>: o fundo claro e as animações
@@ -115,11 +114,10 @@ const LandingSimples = () => {
           <div className="relative mb-7">
             <div className="h-[150px] w-[150px] rounded-full border-[3px] border-[#0143A9] bg-white p-[5px] shadow-[0_10px_30px_rgba(1,67,169,0.16),0_0_0_4px_#FFFFFF]">
               <img
-                src={promofyAvatar}
+                src="/promofy-avatar.jpg"
                 alt="Promofy"
                 width="140"
                 height="140"
-                decoding="async"
                 className="block h-full w-full rounded-full object-cover"
               />
             </div>
