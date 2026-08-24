@@ -13,8 +13,6 @@
     <link rel="canonical" data-rh="true" href="https://apromofy.online/" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://connect.facebook.net" />
     <link rel="dns-prefetch" href="https://www.facebook.com" />
     <link rel="dns-prefetch" href="https://bzrcdn.openai.com" />
@@ -25,20 +23,16 @@
          build e o nome não existiria na hora de escrever este HTML. -->
     <link rel="preload" as="image" href="/promofy-avatar.jpg" fetchpriority="high" />
 
-    <!-- A folha do Google Fonts sai do caminho crítico. Como `preload`, o
-         navegador baixa com prioridade mas sem bloquear a renderização; o
-         onload a promove a stylesheet. O texto aparece na fonte de fallback
-         (que tem size-adjust casado com a Inter, ver index.css) e troca quando
-         a Inter chega, então a troca quase não mexe no layout. -->
-    <link
-      rel="preload"
-      as="style"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap"
-      onload="this.rel='stylesheet'"
-    />
-    <noscript>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
-    </noscript>
+    <!-- A Inter agora é servida por este mesmo domínio (ver o @font-face em
+         src/index.css). Antes vinha do Google Fonts, o que obrigava o
+         navegador a abrir conexão com fonts.googleapis.com, ler o CSS de lá e
+         só então abrir uma SEGUNDA conexão com fonts.gstatic.com para buscar
+         os arquivos — duas resoluções de DNS e dois handshakes TLS antes da
+         primeira letra. Local, é zero conexão nova e um preload direto.
+         O `crossorigin` é obrigatório mesmo sendo o mesmo domínio: fonte é
+         sempre buscada em modo CORS, e sem ele o preload seria descartado e
+         o arquivo baixado duas vezes. -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin-var.woff2" crossorigin />
 
     <meta property="og:title" data-rh="true" content="Promofy — Ofertas e Cupons que Valem a Pena">
     <meta name="twitter:title" data-rh="true" content="Promofy — Ofertas e Cupons que Valem a Pena">

@@ -1,12 +1,10 @@
-import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
-// O 404 precisa do próprio <Helmet>: as tags de SEO do index.html são `data-rh`,
-// então o Helmet as remove ao desmontar o da página anterior. Sem isto, chegar
-// aqui por navegação interna deixava a página com o título da página anterior e
-// sem canonical nenhuma. Aqui não se declara canonical de propósito — página
-// inexistente não é conteúdo canônico —, e o noindex mantém isso fora do índice.
+// O 404 precisa do próprio <Helmet> porque o index.html estático carrega as
+// tags da raiz; sem isto, uma URL inexistente serviria o título e a canonical
+// da home. Aqui não se declara canonical de propósito — página inexistente não
+// é conteúdo canônico —, e o noindex mantém isso fora do índice.
 const NotFoundHead = () => (
   <Helmet>
     <title>Página não encontrada — Promofy</title>
@@ -16,11 +14,11 @@ const NotFoundHead = () => (
 );
 
 const NotFound = () => {
-  const location = useLocation();
+  const caminho = typeof window === "undefined" ? "" : window.location.pathname;
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
+    console.error("404 Error: User attempted to access non-existent route:", caminho);
+  }, [caminho]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted">

@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Instagram, MessageCircle } from "lucide-react";
 import promofyLogo from "@/assets/promofy-logo.webp";
@@ -19,15 +18,15 @@ const Contact = () => {
         <meta name="twitter:description" content="Tire dúvidas, envie sugestões de produtos ou converse sobre parcerias com a equipe da Promofy." />
       </Helmet>
       <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 pt-6 sm:px-8">
-        <Link to="/" className="flex items-center gap-2.5">
+        <a href="/" className="flex items-center gap-2.5">
           <img src={promofyLogo} alt="Promofy" className="h-10 w-auto object-contain" />
           <span className="text-2xl font-black tracking-tight text-foreground">
             Promo<span className="text-foreground">fy</span>
           </span>
-        </Link>
-        <Link to="/" className="text-sm font-semibold text-muted-foreground hover:text-foreground">
+        </a>
+        <a href="/" className="text-sm font-semibold text-muted-foreground hover:text-foreground">
           ← Voltar
-        </Link>
+        </a>
       </header>
 
       <main className="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8">
@@ -89,9 +88,9 @@ const Contact = () => {
 
         <p className="mt-10 text-center text-xs text-muted-foreground">
           Para solicitações relacionadas a dados pessoais (LGPD), vá para a página de{" "}
-          <Link to="/privacidade" className="underline hover:text-foreground">
+          <a href="/privacidade" className="underline hover:text-foreground">
             Privacidade
-          </Link>
+          </a>
           .
         </p>
       </main>

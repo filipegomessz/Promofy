@@ -35,8 +35,10 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: SPA fallback (serve app on deep links / refresh)
-        run: cp dist/index.html dist/404.html
+      # O antigo `cp dist/index.html dist/404.html` saiu em 24/08/2026. Cada
+      # rota agora tem o próprio arquivo pré-renderizado (dist/termos/index.html
+      # etc.), e o scripts/prerender.mjs também gera o dist/404.html com a
+      # página de erro de verdade. Copiar a home por cima o sobrescreveria.
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
