@@ -17,7 +17,26 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://connect.facebook.net" />
     <link rel="dns-prefetch" href="https://www.facebook.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
+
+    <!-- Elemento de LCP da landing. Mora em /public com nome fixo justamente
+         para poder ser pré-carregado daqui: asset importado ganha hash no
+         build e o nome não existiria na hora de escrever este HTML. -->
+    <link rel="preload" as="image" href="/promofy-avatar.jpg" fetchpriority="high" />
+
+    <!-- A folha do Google Fonts sai do caminho crítico. Como `preload`, o
+         navegador baixa com prioridade mas sem bloquear a renderização; o
+         onload a promove a stylesheet. O texto aparece na fonte de fallback
+         (que tem size-adjust casado com a Inter, ver index.css) e troca quando
+         a Inter chega, então a troca quase não mexe no layout. -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap"
+      onload="this.rel='stylesheet'"
+    />
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
+    </noscript>
 
     <meta property="og:title" data-rh="true" content="Promofy — Ofertas e Cupons que Valem a Pena">
     <meta name="twitter:title" data-rh="true" content="Promofy — Ofertas e Cupons que Valem a Pena">
