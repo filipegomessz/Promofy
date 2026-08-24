@@ -16,6 +16,12 @@ const TermsHead = () => (
   </Helmet>
 );
 
+// Data em que o TEXTO desta página mudou pela última vez. Antes isto era
+// `new Date()`, que renderizava sempre o dia de hoje do visitante — uns
+// Termos que se dizem atualizados todo dia não marcam versão nenhuma.
+// Mexeu no texto? Atualize esta data no mesmo commit.
+const ULTIMA_ATUALIZACAO = "21/07/2026";
+
 const sections = [
   {
     title: "Sobre a Promofy",
@@ -118,7 +124,7 @@ const Terms = () => {
           Termos de Uso
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Última atualização: {new Date().toLocaleDateString("pt-BR")}
+          Última atualização: {ULTIMA_ATUALIZACAO}
         </p>
 
         <div className="mt-8 space-y-4">

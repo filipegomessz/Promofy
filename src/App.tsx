@@ -13,7 +13,7 @@ const Terms = lazy(() => import("./pages/Terms.tsx"));
 const Privacy = lazy(() => import("./pages/Privacy.tsx"));
 const Contact = lazy(() => import("./pages/Contact.tsx"));
 
-// Saíram daqui, em 21/08/2026, três provedores que vieram do scaffold do
+// Saíram daqui, em 24/08/2026, três provedores que vieram do scaffold do
 // Lovable e que NENHUMA página usava: QueryClientProvider (nenhum useQuery no
 // projeto), <Toaster /> + <Sonner /> (ninguém dispara toast) e TooltipProvider
 // (nenhum Tooltip). Custavam ~26 kB comprimidos no primeiro carregamento de uma

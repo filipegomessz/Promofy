@@ -46,7 +46,7 @@ const faqs = [
   },
 ];
 
-// ESTA PÁGINA ESTÁ FORA DO AR: desde 21/08/2026 a raiz do site é a landing
+// ESTA PÁGINA ESTÁ FORA DO AR: desde 24/08/2026 a raiz do site é a landing
 // simples (src/pages/LandingSimples.tsx) e este arquivo ficou sem rota, de
 // propósito, guardado para o dia em que voltar a ser usado. Ver o comentário
 // no topo de src/App.tsx para religá-la.
