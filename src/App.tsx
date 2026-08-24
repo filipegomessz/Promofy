@@ -6,12 +6,10 @@ import { lazy, Suspense, type ReactNode } from "react";
 import LandingSimples from "./pages/LandingSimples.tsx";
 import { chaveDaRota, type ChaveDeRota } from "./rotas.ts";
 
-// A landing entra de forma normal por ser a página de entrada; as outras são
-// lazy para não pesarem no carregamento dela.
+// A landing entra de forma normal por ser a página de entrada; o 404 é lazy
+// para não pesar no carregamento dela. Terms/Privacy/Contact saíram daqui em
+// 24/08/2026 junto com as rotas — ver o quadro em src/rotas.ts.
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
-const Terms = lazy(() => import("./pages/Terms.tsx"));
-const Privacy = lazy(() => import("./pages/Privacy.tsx"));
-const Contact = lazy(() => import("./pages/Contact.tsx"));
 
 // Saíram daqui, em 24/08/2026, três provedores que vieram do scaffold do
 // Lovable e que NENHUMA página usava: QueryClientProvider (nenhum useQuery no
@@ -29,9 +27,6 @@ const Contact = lazy(() => import("./pages/Contact.tsx"));
 // navegação sem recarga, é aqui que o roteador volta.
 const PAGINAS: Record<ChaveDeRota, ReactNode> = {
   landing: <LandingSimples />,
-  termos: <Terms />,
-  privacidade: <Privacy />,
-  contato: <Contact />,
   404: <NotFound />,
 };
 
