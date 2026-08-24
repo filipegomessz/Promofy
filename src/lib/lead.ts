@@ -47,6 +47,63 @@ let __leadFireCount = 0;
  */
 const ESPERA_ANTES_DE_NAVEGAR_MS = 250;
 
+const BEACONS = [
+  { plataforma: "meta", padrao: /facebook\.com\/tr/ },
+  { plataforma: "openai", padrao: /bzr\.openai\.com/ },
+];
+
+/** Quanto tempo esperamos pelo beacon antes de desistir de observar. */
+const OBSERVAR_BEACON_POR_MS = 4000;
+
+/**
+ * Estágio 2 da auditoria: registra no console QUANDO a requisição de cada
+ * pixel de fato termina, e não apenas quando a função foi chamada.
+ *
+ * A distinção não é preciosismo. Entre "chamei o SDK" e "a plataforma
+ * contabilizou a conversão" existem, no mínimo: o lote do SDK, o envio, a
+ * ingestão da plataforma, a deduplicação e a janela de atribuição. Daqui de
+ * dentro do navegador dá para observar SÓ até o envio — e nem o status HTTP,
+ * porque as duas respostas são cross-origin sem Timing-Allow-Origin. Por isso
+ * o log fala "requisição concluída", nunca "conversão registrada": afirmar o
+ * segundo a partir do primeiro seria inventar.
+ *
+ * É diagnóstico de desenvolvimento: no celular a aba já foi para o fundo e
+ * ninguém está lendo console. Não altera o disparo em nada.
+ */
+const observarBeacons = () => {
+  if (typeof PerformanceObserver === "undefined") return;
+
+  const t0 = performance.now();
+  const pendentes = new Set(BEACONS.map((b) => b.plataforma));
+  let encerrado = false;
+
+  const encerrar = (observador: PerformanceObserver) => {
+    if (encerrado) return;
+    encerrado = true;
+    observador.disconnect();
+    pendentes.forEach((p) => {
+      console.info(
+        `[Lead] ${p}: nenhuma requisição observada em ${OBSERVAR_BEACON_POR_MS} ms. Pode ter saído depois da aba ficar oculta — o que é o normal no celular.`,
+      );
+    });
+  };
+
+  const observador = new PerformanceObserver((lista) => {
+    for (const entrada of lista.getEntries()) {
+      const alvo = BEACONS.find((b) => b.padrao.test(entrada.name));
+      if (!alvo || !pendentes.has(alvo.plataforma)) continue;
+      pendentes.delete(alvo.plataforma);
+      console.info(
+        `[Lead] ${alvo.plataforma}: requisição concluída ${Math.round(entrada.startTime - t0)} ms após o clique (status HTTP não é visível daqui — cross-origin).`,
+      );
+    }
+    if (pendentes.size === 0) encerrar(observador);
+  });
+
+  observador.observe({ type: "resource", buffered: false });
+  window.setTimeout(() => encerrar(observador), OBSERVAR_BEACON_POR_MS);
+};
+
 /**
  * Dispara a conversão nos dois pixels e só então abre o link.
  *
@@ -80,11 +137,12 @@ export const trackLead = (
     __leadFireCount += 1;
   }
 
-  // Verificação no console (Pixel Helper e afins).
-  // Esperado: os dois "sim", uma vez por clique, antes do redirect ao WhatsApp.
+  // Estágio 1. "chamado" diz só que a função do pixel existia e foi invocada —
+  // nada saiu do navegador ainda. Ver o comentário de observarBeacons().
   console.info(
-    `[Lead] meta=${temFbq ? "sim" : "NAO"} openai=${temOaiq ? "sim" : "NAO"} eventID=${eventID ?? "n/a"} cliquesNaSessao=${__leadFireCount} href=${href ?? "n/a"}`,
+    `[Lead] clique #${__leadFireCount} — meta=${temFbq ? "chamado" : "INDISPONIVEL"} openai=${temOaiq ? "chamado" : "INDISPONIVEL"} eventID=${eventID ?? "n/a"} href=${href ?? "n/a"}`,
   );
+  observarBeacons();
 
   if (!temFbq) {
     console.warn("[Lead] fbq indisponível — verifique o script do Pixel da Meta no index.html");
