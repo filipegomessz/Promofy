@@ -73,7 +73,7 @@ const embutirCss = (html) => {
 };
 
 let gravados = 0;
-for (const [chave, { caminho, arquivo }] of Object.entries(ARQUIVO_DA_ROTA)) {
+for (const [chave, { caminho, arquivo, alias }] of Object.entries(ARQUIVO_DA_ROTA)) {
   const { corpo, head } = render(caminho);
 
   if (!corpo || corpo.length < 200) {
@@ -93,11 +93,14 @@ for (const [chave, { caminho, arquivo }] of Object.entries(ARQUIVO_DA_ROTA)) {
     .replace("</head>", `  ${head}\n  </head>`)
     .replace(MARCADOR_RAIZ, `<div id="root" data-rota="${normalizar(caminho)}">${corpo}</div>`);
 
-  const destino = join(dist, arquivo);
-  mkdirSync(dirname(destino), { recursive: true });
-  writeFileSync(destino, html, "utf8");
-  gravados += 1;
-  console.log(`prerender: ${arquivo.padEnd(24)} ${(corpo.length / 1024).toFixed(1)} kB de HTML`);
+  for (const nome of alias ? [arquivo, alias] : [arquivo]) {
+    const destino = join(dist, nome);
+    mkdirSync(dirname(destino), { recursive: true });
+    writeFileSync(destino, html, "utf8");
+    gravados += 1;
+    const nota = nome === alias ? "  (alias, evita o 301 do Pages)" : "";
+    console.log(`prerender: ${nome.padEnd(24)} ${(corpo.length / 1024).toFixed(1)} kB de HTML${nota}`);
+  }
 }
 
 console.log(`prerender: ${gravados} rotas gravadas.`);
