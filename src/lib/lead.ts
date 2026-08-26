@@ -2,10 +2,17 @@ import type { MouseEvent } from "react";
 
 declare global {
   interface Window {
+    /** Pixel da Meta. O index.html cria o stub com fila de forma SÍNCRONA, então
+     *  daqui isto é sempre uma função — mesmo antes de o SDK ter chegado. */
     fbq?: (...args: unknown[]) => void;
-    /** Pixel do OpenAI Ads. Carregado no index.html; enquanto o SDK não chega,
-     *  é um stub que empilha as chamadas numa fila e as envia depois. */
+    /** Pixel do OpenAI Ads. Mesma coisa: stub com fila criado de forma síncrona
+     *  no index.html; enquanto o SDK não chega, empilha as chamadas em oaiq.q. */
     oaiq?: (...args: unknown[]) => void;
+    /** Posto pelo index.html: diz se o SDK de cada pixel já terminou de carregar.
+     *  Existe só para o log abaixo poder separar "enfileirado" de "entregue" —
+     *  com o stub sempre no ar, `typeof window.fbq === "function"` virou sempre
+     *  verdadeiro e sozinho não informa mais nada. */
+    __promofyPixels?: { meta: boolean; openai: boolean };
   }
 }
 
@@ -39,6 +46,12 @@ let __leadFireCount = 0;
  * Por isso NÃO esticamos a espera para ~1,3 s: não resolveria nada que o
  * flush por visibilidade já não resolva, e custaria mais de um segundo de
  * tela parada depois do toque — o pior lugar possível para uma pausa.
+ *
+ * E não precisamos esticar nem para o caso do SDK ainda não ter chegado: o
+ * index.html começa a baixar os dois no primeiro `pointerdown`, que acontece
+ * ANTES do clique. Quando estes 250 ms terminam, o download já teve o tempo
+ * do toque inteiro de vantagem. E se mesmo assim não tiver chegado, a chamada
+ * fica na fila do stub e sobe quando ele carregar — não se perde.
  */
 const ESPERA_ANTES_DE_NAVEGAR_MS = 250;
 
@@ -132,18 +145,30 @@ export const trackLead = (
     __leadFireCount += 1;
   }
 
-  // Estágio 1. "chamado" diz só que a função do pixel existia e foi invocada —
-  // nada saiu do navegador ainda. Ver o comentário de observarBeacons().
+  // Estágio 1. Desde 26/08/2026 o index.html cria os stubs de forma síncrona, e
+  // com isso a pergunta "o pixel existe?" virou sempre sim. O que ainda varia —
+  // e é o que interessa quando faltar lead no painel — é se a chamada FOI PARA
+  // O SDK ou apenas para a fila, esperando ele chegar. Fila não é perda: ela
+  // sobe assim que o SDK carrega. Perda era o que acontecia antes, quando não
+  // havia nem stub nem fila e a chamada era descartada aqui mesmo.
+  // Nos três casos, nada saiu do navegador ainda — ver observarBeacons().
+  const sdks = window.__promofyPixels;
+  const situacao = (existe: boolean, sdkPronto: boolean | undefined) =>
+    !existe ? "INDISPONIVEL" : sdkPronto ? "entregue ao SDK" : "enfileirado";
+
   console.info(
-    `[Lead] clique #${__leadFireCount} — meta=${temFbq ? "chamado" : "INDISPONIVEL"} openai=${temOaiq ? "chamado" : "INDISPONIVEL"} eventID=${eventID ?? "n/a"} href=${href ?? "n/a"}`,
+    `[Lead] clique #${__leadFireCount} — meta=${situacao(temFbq, sdks?.meta)} openai=${situacao(temOaiq, sdks?.openai)} eventID=${eventID ?? "n/a"} href=${href ?? "n/a"}`,
   );
   observarBeacons();
 
+  // Com o stub síncrono no index.html, cair aqui deixou de ser questão de
+  // tempo e passou a significar que o script inline NÃO RODOU: bloqueador de
+  // anúncios, CSP, ou alguém mexeu no index.html.
   if (!temFbq) {
-    console.warn("[Lead] fbq indisponível — verifique o script do Pixel da Meta no index.html");
+    console.warn("[Lead] fbq indisponível — o stub do index.html não rodou (bloqueador? CSP?)");
   }
   if (!temOaiq) {
-    console.warn("[Lead] oaiq indisponível — verifique o script do Pixel da OpenAI no index.html");
+    console.warn("[Lead] oaiq indisponível — o stub do index.html não rodou (bloqueador? CSP?)");
   }
 
   // Garante que os eventos sejam enviados antes de navegar (especialmente no
