@@ -46,55 +46,59 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Meta Pixel Code (deferred to idle to protect LCP) -->
+    <!-- OS DOIS PIXELS. Regra: a fila existe desde o primeiro instante, o SDK
+         pesado chega depois. Comentário aqui é curto DE PROPÓSITO — o Vite não
+         minifica script inline, então tudo que se escreve neste bloco viaja em
+         cada página. O porquê inteiro está em src/lib/lead.ts, que é
+         compilado e onde comentário sai de graça. -->
     <script>
       (function () {
-        function loadPixel() {
-          if (window.fbq) return;
-          !function(f,b,e,v,n,t,s)
-          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-          n.queue=[];t=b.createElement(e);t.async=!0;
-          t.src=v;s=b.getElementsByTagName(e)[0];
-          s.parentNode.insertBefore(t,s)}(window, document,'script',
-          'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '1561896425355572');
-          fbq('track', 'PageView');
+        var estado = (window.__promofyPixels = { meta: false, openai: false });
+
+        /* 1. Stub da Meta — trecho oficial menos o rabo que inseria o <script>. */
+        !function(f,n){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[]}(window);
+        fbq('init', '1561896425355572');
+        fbq('track', 'PageView');
+
+        /* 2. Stub da OpenAI — mesma subtração. */
+        !function(w){if(w.oaiq)return;var q=function(){q.q.push(arguments)};q.q=[];w.oaiq=q}(window);
+        // debug liga sozinho fora do site publicado; em apromofy.online é sempre false.
+        var emDesenvolvimento = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+        oaiq("init", { pixelId: "45eXnE333nLqBeWBfwzcL4", debug: emDesenvolvimento });
+
+        /* 3. Aí sim, o material pesado — atrasado. */
+        function carregar(url, aoChegar) {
+          var j = document.createElement("script");
+          j.async = true;
+          j.src = url;
+          j.onload = aoChegar;
+          var primeiro = document.getElementsByTagName("script")[0];
+          primeiro.parentNode.insertBefore(j, primeiro);
         }
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(loadPixel, { timeout: 3000 });
-        } else {
-          setTimeout(loadPixel, 2000);
+
+        var jaBaixou = false;
+        function baixarSdks() {
+          if (jaBaixou) return;
+          jaBaixou = true;
+          carregar("https://connect.facebook.net/en_US/fbevents.js", function () {
+            estado.meta = true;
+          });
+          carregar("https://bzrcdn.openai.com/sdk/oaiq.min.js", function () {
+            estado.openai = true;
+          });
         }
+
+        // Toque, ocioso ou 3 s — o que vier primeiro; `jaBaixou` garante uma
+        // vez só. O porquê de cada um está em src/lib/lead.ts.
+        document.addEventListener("pointerdown", baixarSdks, { capture: true, once: true, passive: true });
+        if ("requestIdleCallback" in window) requestIdleCallback(baixarSdks, { timeout: 3000 });
+        window.setTimeout(baixarSdks, 3000);
       })();
     </script>
     <noscript><img height="1" width="1" style="display:none"
       src="https://www.facebook.com/tr?id=1561896425355572&ev=PageView&noscript=1" alt="" /></noscript>
-
-    <!-- Pixel do OpenAI Ads (adiado para o ocioso, igual ao da Meta).
-         A instrução da OpenAI pede o script "perto do topo"; adiamos de
-         propósito, porque o trecho deles já é um stub com fila: chamadas
-         feitas antes do SDK chegar ficam empilhadas em oaiq.q e sobem
-         quando ele carrega. Nada se perde, e a renderização não espera.
-         O evento de conversão NÃO fica aqui — ele mora em src/lib/lead.ts,
-         no mesmo ponto que dispara o Lead da Meta. -->
-    <script>
-      (function () {
-        function loadOaiq() {
-          if (window.oaiq) return;
-          !function(w,d,s,u){if(w.oaiq)return;var q=function(){q.q.push(arguments)};q.q=[];w.oaiq=q;var j=d.createElement(s);j.async=1;j.src=u;var f=d.getElementsByTagName(s)[0];f.parentNode.insertBefore(j,f)}(window,document,"script","https://bzrcdn.openai.com/sdk/oaiq.min.js");
-          // debug liga sozinho só fora do site publicado — nada de lembrar de trocar
-          // antes de subir. Em apromofy.online isto é sempre false.
-          var emDesenvolvimento = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-          oaiq("init", { pixelId: "45eXnE333nLqBeWBfwzcL4", debug: emDesenvolvimento });
-        }
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(loadOaiq, { timeout: 3000 });
-        } else {
-          setTimeout(loadOaiq, 2000);
-        }
-      })();
-    </script>
   </body>
 </html>
