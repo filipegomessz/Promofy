@@ -4,6 +4,7 @@ import { lazy, Suspense, type ReactNode } from "react";
 // a usá-la basta importá-la aqui e trocar o caso "landing" abaixo, mandando a
 // landing para outro caminho. Nada mais depende dela.
 import LandingSimples from "./pages/LandingSimples.tsx";
+import Index from "./pages/Index.tsx";
 import { chaveDaRota, type ChaveDeRota } from "./rotas.ts";
 
 // A landing entra de forma normal por ser a página de entrada; o 404 é lazy
@@ -27,6 +28,7 @@ const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 // navegação sem recarga, é aqui que o roteador volta.
 const PAGINAS: Record<ChaveDeRota, ReactNode> = {
   landing: <LandingSimples />,
+  home: <Index />,
   404: <NotFound />,
 };
 

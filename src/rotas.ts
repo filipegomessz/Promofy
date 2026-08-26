@@ -21,7 +21,7 @@
  * │ correto para buscadores tratarem como removidas.                      │
  * └───────────────────────────────────────────────────────────────────────┘
  */
-export const CHAVES_DE_ROTA = ["landing", "404"] as const;
+export const CHAVES_DE_ROTA = ["landing", "home", "404"] as const;
 
 export type ChaveDeRota = (typeof CHAVES_DE_ROTA)[number];
 
@@ -29,8 +29,12 @@ export type ChaveDeRota = (typeof CHAVES_DE_ROTA)[number];
 export const normalizar = (caminho: string) =>
   caminho.split("?")[0].split("#")[0].replace(/\/+$/, "");
 
-export const chaveDaRota = (caminho: string): ChaveDeRota =>
-  normalizar(caminho) === "" ? "landing" : "404";
+export const chaveDaRota = (caminho: string): ChaveDeRota => {
+  const c = normalizar(caminho);
+  if (c === "") return "home";
+  if (c === "/lp") return "landing";
+  return "404";
+};
 
 /**
  * Onde o arquivo de cada rota é gravado no build (ver scripts/prerender.mjs).
@@ -39,6 +43,7 @@ export const chaveDaRota = (caminho: string): ChaveDeRota =>
  * arquivo responder 404 de verdade.
  */
 export const ARQUIVO_DA_ROTA: Record<ChaveDeRota, { caminho: string; arquivo: string }> = {
-  landing: { caminho: "/", arquivo: "index.html" },
+  home: { caminho: "/", arquivo: "index.html" },
+  landing: { caminho: "/lp", arquivo: "lp/index.html" },
   404: { caminho: "/__404__", arquivo: "404.html" },
 };
