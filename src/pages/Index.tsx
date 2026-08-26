@@ -14,7 +14,7 @@ import {
 import promofyLogo from "@/assets/promofy-logo.webp";
 import promofyFooterLogo from "@/assets/promofy-footer-logo.webp";
 import PartnersMarquee from "@/components/PartnersMarquee";
-import { WHATSAPP_GROUP, trackLead } from "@/lib/lead";
+import { WHATSAPP_GROUP_LANDING as WHATSAPP_GROUP, trackLead } from "@/lib/lead";
 import whatsappIcon from "@/assets/whatsapp-icon.webp";
 import {
   Accordion,
