@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { CircleCheckBig, Users } from "lucide-react";
-import { WHATSAPP_GROUP_LANDING, trackLead } from "@/lib/lead";
+import { WHATSAPP_GROUP, trackLead } from "@/lib/lead";
 
 // Nada de VISUAL nesta tela depende do <Helmet>: o fundo claro e as animações
 // moram em index.css. É de propósito — o Helmet só aplica no `requestAnimation-
@@ -27,30 +27,33 @@ const WhatsAppGlyph = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Esta tela é a raiz do site, então o head aqui repete EXATAMENTE o que está
-// escrito no index.html. É de propósito: o GitHub Pages entrega o index.html
-// estático, e quem não roda JS (parte dos crawlers, preview de link) só vê
-// aquilo. Se os dois divergirem, cada visitante vê um texto diferente.
-// Mudou aqui? Mudar no index.html também.
+// Esta tela vive em /lp, e a raiz do site é a home completa. A canonical
+// PRECISA apontar para /lp: as duas páginas falam do mesmo assunto, e se
+// ambas se declarassem "/" o buscador teria dois conteúdos disputando o
+// mesmo endereço — o clássico jeito de as duas perderem posição.
+// O `noindex` é deliberado: esta é uma página de destino de anúncio, feita
+// para quem chega por link pago. Não há motivo para disputar busca orgânica
+// com a home, e é ela que deve aparecer no Google.
 const LandingSimplesHead = () => (
   <Helmet>
-    <title>Promofy — Ofertas e Cupons que Valem a Pena</title>
+    <title>Promofy — entre no grupo de ofertas</title>
     <meta
       name="description"
-      content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
+      content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam, e você sai quando quiser."
     />
-    <link rel="canonical" href="https://apromofy.online/" />
+    <meta name="robots" content="noindex, follow" />
+    <link rel="canonical" href="https://apromofy.online/lp" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://apromofy.online/" />
-    <meta property="og:title" content="Promofy — Ofertas e Cupons que Valem a Pena" />
+    <meta property="og:url" content="https://apromofy.online/lp" />
+    <meta property="og:title" content="Promofy — entre no grupo de ofertas" />
     <meta
       property="og:description"
-      content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
+      content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam."
     />
-    <meta name="twitter:title" content="Promofy — Ofertas e Cupons que Valem a Pena" />
+    <meta name="twitter:title" content="Promofy — entre no grupo de ofertas" />
     <meta
       name="twitter:description"
-      content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
+      content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam."
     />
   </Helmet>
 );
@@ -157,10 +160,10 @@ const LandingSimples = () => {
 
           <div className="mb-[30px] w-full max-w-[400px]">
             <a
-              href={WHATSAPP_GROUP_LANDING}
+              href={WHATSAPP_GROUP}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => trackLead(e, WHATSAPP_GROUP_LANDING)}
+              onClick={(e) => trackLead(e, WHATSAPP_GROUP)}
               className="lp-cta flex w-full items-center justify-center gap-3 rounded-2xl bg-[linear-gradient(135deg,#21C45D_0%,#13AE61_100%)] px-5 py-[22px] text-[19px] font-extrabold uppercase tracking-[0.5px] text-white shadow-[0_10px_40px_rgba(33,196,93,0.45),inset_0_-5px_0_rgba(0,0,0,0.18)] sm:text-[21px]"
             >
               <WhatsAppGlyph className="h-7 w-7 shrink-0" />

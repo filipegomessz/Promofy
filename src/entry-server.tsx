@@ -1,7 +1,11 @@
 import { renderToString } from "react-dom/server";
 import { HelmetProvider, type HelmetServerState } from "react-helmet-async";
 import { Suspense, type ReactNode } from "react";
+import Index from "./pages/Index.tsx";
 import LandingSimples from "./pages/LandingSimples.tsx";
+import Terms from "./pages/Terms.tsx";
+import Privacy from "./pages/Privacy.tsx";
+import Contact from "./pages/Contact.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { chaveDaRota, type ChaveDeRota } from "./rotas.ts";
 
@@ -14,7 +18,11 @@ export { ARQUIVO_DA_ROTA } from "./rotas.ts";
 // em branco. A tabela de caminhos vem de rotas.ts, então cliente e servidor não
 // podem divergir sobre quais rotas existem.
 const PAGINAS: Record<ChaveDeRota, ReactNode> = {
+  home: <Index />,
   landing: <LandingSimples />,
+  termos: <Terms />,
+  privacidade: <Privacy />,
+  contato: <Contact />,
   404: <NotFound />,
 };
 

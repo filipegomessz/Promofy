@@ -46,14 +46,15 @@ const faqs = [
   },
 ];
 
-// ESTA PÁGINA ESTÁ FORA DO AR: desde 24/08/2026 a raiz do site é a landing
-// simples (src/pages/LandingSimples.tsx) e este arquivo ficou sem rota, de
-// propósito, guardado para o dia em que voltar a ser usado. Ver o comentário
-// no topo de src/App.tsx para religá-la.
+// Esta é a home: a raiz do site e o que deve aparecer na busca orgânica. A
+// tela única de captação, que recebe o tráfego pago, vive em /lp
+// (src/pages/LandingSimples.tsx) e leva `noindex` de propósito, para as duas
+// não disputarem a mesma posição no Google.
 //
-// O <Helmet> abaixo assume que esta página é a RAIZ (canonical "/"). Se ela
-// voltar em outro caminho, corrigir canonical e og:url — e lembrar que as
-// tags de SEO do index.html são `data-rh`, ou seja, o Helmet as substitui.
+// O head abaixo repete EXATAMENTE o que está escrito no index.html: o GitHub
+// Pages entrega aquele HTML estático, e quem não roda JS (parte dos crawlers,
+// preview de link) só vê aquilo. Se os dois divergirem, cada visitante vê um
+// texto diferente. Mudou aqui? Mudar no index.html também.
 const IndexHead = () => (
   <Helmet>
     <title>Promofy — Ofertas e Cupons que Valem a Pena</title>
@@ -130,7 +131,7 @@ const Index = () => {
       {/* Header */}
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 pt-6 sm:px-8">
         <a href="/" className="flex items-center gap-2.5">
-          <img src={promofyLogo} alt="Promofy" width="40" height="40" fetchPriority="high" decoding="async" className="h-10 w-auto object-contain" />
+          <img src={promofyLogo} alt="Promofy" width="40" height="40" decoding="async" className="h-10 w-auto object-contain" />
           <span className="text-2xl font-black tracking-tight text-foreground">
             Promo<span className="text-foreground">fy</span>
           </span>
