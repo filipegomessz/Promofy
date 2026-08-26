@@ -57,10 +57,22 @@ export const chaveDaRota = (caminho: string): ChaveDeRota => {
  *
  * `/` é a home completa (hero, FAQ, esteira, rodapé), que é o que aparece na
  * busca. `/lp` é a tela única de captação, destino dos anúncios pagos.
+ *
+ * SOBRE O `alias` — medido no ar em 24/08/2026: uma rota servida por
+ * `pasta/index.html` faz o GitHub Pages responder **301 para a versão com
+ * barra no fim** (`/lp` → `/lp/`). Numa página de anúncio isso é uma ida e
+ * volta desperdiçada em cada clique pago, antes de a página começar a
+ * carregar. Gravando TAMBÉM um `lp.html` na raiz, as duas grafias respondem
+ * 200 direto e não importa qual delas acabe colada no gerenciador de
+ * anúncios. Só a `/lp` precisa disso: nas páginas legais o redirecionamento
+ * não custa nada, porque ninguém chega nelas por link pago.
  */
-export const ARQUIVO_DA_ROTA: Record<ChaveDeRota, { caminho: string; arquivo: string }> = {
+export const ARQUIVO_DA_ROTA: Record<
+  ChaveDeRota,
+  { caminho: string; arquivo: string; alias?: string }
+> = {
   home: { caminho: "/", arquivo: "index.html" },
-  landing: { caminho: "/lp", arquivo: "lp/index.html" },
+  landing: { caminho: "/lp", arquivo: "lp/index.html", alias: "lp.html" },
   termos: { caminho: "/termos", arquivo: "termos/index.html" },
   privacidade: { caminho: "/privacidade", arquivo: "privacidade/index.html" },
   contato: { caminho: "/contato", arquivo: "contato/index.html" },
