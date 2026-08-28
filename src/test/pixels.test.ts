@@ -38,9 +38,27 @@ const carregados = () =>
  * SDKs com `insertBefore` no primeiro script da página — na página real esse
  * primeiro script é ele próprio, mas um documento de jsdom nasce sem nenhum.
  */
+/**
+ * Cada execução do script deixa um ouvinte de `pointerdown` no `document`, e
+ * limpar `document.head` não o remove. Sem desarmar, o ouvinte de um teste
+ * dispara no teste seguinte e baixa os SDKs uma segunda vez — o que já me
+ * custou uma falha confusa em "baixa uma vez só". Anotamos o que foi
+ * registrado para poder remover no afterEach.
+ */
+const ouvintesRegistrados: Array<[string, EventListenerOrEventListenerObject, unknown]> = [];
+
 const rodarScriptInline = () => {
   document.head.appendChild(document.createElement("script"));
-  new Function(scriptsInline[0])();
+  const original = document.addEventListener.bind(document);
+  document.addEventListener = ((tipo: string, fn: EventListenerOrEventListenerObject, opts: unknown) => {
+    ouvintesRegistrados.push([tipo, fn, opts]);
+    return original(tipo, fn as EventListener, opts as AddEventListenerOptions);
+  }) as typeof document.addEventListener;
+  try {
+    new Function(scriptsInline[0])();
+  } finally {
+    document.addEventListener = original;
+  }
 };
 
 describe("pixels: o stub existe antes do SDK", () => {
@@ -48,6 +66,7 @@ describe("pixels: o stub existe antes do SDK", () => {
     vi.useFakeTimers();
     document.head.innerHTML = "";
     document.body.innerHTML = "";
+    window.history.replaceState({}, "", "/lp");
     delete window.fbq;
     delete window.oaiq;
     delete window.__promofyPixels;
@@ -55,6 +74,10 @@ describe("pixels: o stub existe antes do SDK", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    for (const [tipo, fn, opts] of ouvintesRegistrados) {
+      document.removeEventListener(tipo, fn, opts as EventListenerOptions);
+    }
+    ouvintesRegistrados.length = 0;
   });
 
   it("o index.html tem UM bloco inline de pixel, não dois soltos", () => {
@@ -125,6 +148,24 @@ describe("pixels: o stub existe antes do SDK", () => {
 
     vi.advanceTimersByTime(3000);
     expect(carregados()).toHaveLength(2);
+  });
+
+  it("quem vem de anúncio da OpenAI carrega o SDK NA HORA, sem adiamento", () => {
+    // O `oppref` é o identificador de clique que liga a conversão à campanha.
+    // O SDK só o captura quando carrega, lendo location.search — então para
+    // esse visitante o adiamento não pode valer. Sem isto, a atribuição fica
+    // pendurada num detalhe de performance, que é onde ela morre em silêncio.
+    window.history.replaceState({}, "", "/lp?oppref=gAAAAAb123");
+    rodarScriptInline();
+
+    // Nada de avançar relógio, nada de tocar na tela.
+    expect(carregados()).toHaveLength(2);
+  });
+
+  it("sem oppref o adiamento continua valendo (o PageSpeed não regride)", () => {
+    window.history.replaceState({}, "", "/lp");
+    rodarScriptInline();
+    expect(carregados()).toEqual([]);
   });
 
   it("baixa uma vez só, mesmo com toque e relógio juntos", () => {

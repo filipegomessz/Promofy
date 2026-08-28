@@ -207,10 +207,30 @@ export const trackLead = (
   const situacao = (existe: boolean, sdkPronto: boolean | undefined) =>
     !existe ? "INDISPONIVEL" : sdkPronto ? "entregue ao SDK" : "enfileirado";
 
+  // Terceiro estágio, aberto em 28/08/2026: a conversão está ATRIBUÍDA?
+  //
+  // Um evento aceito não é um evento atribuído. A OpenAI liga a conversão à
+  // campanha por um identificador de clique, o `oppref`, que ela pendura na
+  // URL de destino do anúncio; o SDK o captura e guarda no cookie `__oppref`
+  // por 30 dias. Sem ele o evento chega, é aceito com HTTP 202, e fica ÓRFÃO:
+  // não conta para a campanha e não alimenta a otimização — que é o pior tipo
+  // de falha, porque de fora parece tudo certo. Ausência é NORMAL em quem vem
+  // do orgânico ou da Meta; o que importa é ver isso em quem veio do anúncio.
+  const clickRefOpenai =
+    document.cookie.match(/(?:^|;\s*)__oppref=([^;]*)/)?.[1] ?? null;
+
   console.info(
-    `[Lead] clique #${__leadFireCount} — meta=${situacao(temFbq, sdks?.meta)} openai=${situacao(temOaiq, sdks?.openai)} eventID=${eventID ?? "n/a"} href=${href ?? "n/a"}`,
+    `[Lead] clique #${__leadFireCount} — meta=${situacao(temFbq, sdks?.meta)} openai=${situacao(temOaiq, sdks?.openai)} atribuicaoOpenAI=${clickRefOpenai ?? "AUSENTE (evento ficara orfao)"} eventID=${eventID ?? "n/a"} href=${href ?? "n/a"}`,
   );
   observarBeacons();
+
+  // Veio de anúncio da OpenAI mas o identificador não foi capturado: isso é
+  // contradição, não é o caso normal do visitante orgânico. Vale barulho.
+  if (!clickRefOpenai && window.location.search.includes("oppref=")) {
+    console.error(
+      "[Lead] a URL trouxe oppref mas o cookie __oppref está vazio — o SDK da OpenAI não capturou o identificador do clique. Esta conversão NÃO será atribuída à campanha.",
+    );
+  }
 
   // Com o stub síncrono no index.html, cair aqui deixou de ser questão de
   // tempo e passou a significar que o script inline NÃO RODOU: bloqueador de
