@@ -79,29 +79,29 @@
           primeiro.parentNode.insertBefore(j, primeiro);
         }
 
-        var jaBaixou = false;
-        function baixarSdks() {
-          if (jaBaixou) return;
-          jaBaixou = true;
+        // A OpenAI carrega AGORA, sem adiamento nenhum — é a instrução deles
+        // ("perto do topo") e nós a estávamos contrariando. Ver src/lib/lead.ts
+        // para o motivo: atribuição vale mais do que ponto de PageSpeed.
+        carregar("https://bzrcdn.openai.com/sdk/oaiq.min.js", function () {
+          estado.openai = true;
+        });
+
+        // A Meta continua adiada: está comprovadamente contando, é o script
+        // mais pesado dos dois, e o beacon dela sai em ~10 ms no clique.
+        var jaBaixouMeta = false;
+        function baixarMeta() {
+          if (jaBaixouMeta) return;
+          jaBaixouMeta = true;
           carregar("https://connect.facebook.net/en_US/fbevents.js", function () {
             estado.meta = true;
           });
-          carregar("https://bzrcdn.openai.com/sdk/oaiq.min.js", function () {
-            estado.openai = true;
-          });
         }
 
-        // Veio de anúncio da OpenAI? Então NADA de adiar: a URL traz ?oppref=,
-        // que é o que liga a conversão à campanha, e o SDK só o captura quando
-        // carrega. Atribuição não pode depender de adiamento de performance.
-        // Não custa PageSpeed: medição nenhuma chega com oppref na URL.
-        if (location.search.indexOf("oppref=") !== -1) baixarSdks();
-
-        // Para todo o resto: toque, ocioso ou 3 s — o que vier primeiro;
-        // `jaBaixou` garante uma vez só. O porquê está em src/lib/lead.ts.
-        document.addEventListener("pointerdown", baixarSdks, { capture: true, once: true, passive: true });
-        if ("requestIdleCallback" in window) requestIdleCallback(baixarSdks, { timeout: 3000 });
-        window.setTimeout(baixarSdks, 3000);
+        // Toque, ocioso ou 3 s — o que vier primeiro; `jaBaixouMeta` garante
+        // uma vez só. O porquê de cada um está em src/lib/lead.ts.
+        document.addEventListener("pointerdown", baixarMeta, { capture: true, once: true, passive: true });
+        if ("requestIdleCallback" in window) requestIdleCallback(baixarMeta, { timeout: 3000 });
+        window.setTimeout(baixarMeta, 3000);
       })();
     </script>
     <noscript><img height="1" width="1" style="display:none"
