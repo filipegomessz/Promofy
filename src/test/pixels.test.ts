@@ -31,6 +31,9 @@ const carregados = () =>
     .map((s) => s.src)
     .filter((src) => src.includes(SRC_META) || src.includes(SRC_OPENAI));
 
+const carregadosMeta = () => carregados().filter((s) => s.includes(SRC_META));
+const carregadosOpenai = () => carregados().filter((s) => s.includes(SRC_OPENAI));
+
 /**
  * Executa o script inline no mesmo `window` do teste.
  *
@@ -125,55 +128,45 @@ describe("pixels: o stub existe antes do SDK", () => {
     expect(filaOpenai[filaOpenai.length - 1][1]).toBe("lead_created");
   });
 
-  it("NÃO baixa os SDKs junto com o stub — o adiamento continua de pé", () => {
+  it("o SDK da OpenAI baixa NA HORA — sem toque, sem ocioso, sem relógio", () => {
+    // Esta é a regra desde 28/08/2026 e o teste existe para impedir que ela
+    // seja "otimizada" de novo. A OpenAI manda pôr o script perto do topo, e
+    // o SDK só captura o `oppref` (o identificador de clique que liga a
+    // conversão à campanha) quando carrega. Pixel não é lugar de comprar
+    // ponto de PageSpeed. Ver o cabeçalho de src/lib/lead.ts.
     rodarScriptInline();
-    expect(carregados()).toEqual([]);
+    expect(carregadosOpenai()).toHaveLength(1);
   });
 
-  it("o primeiro toque adianta o download", () => {
+  it("a Meta continua adiada — o adiamento dela não regride", () => {
+    rodarScriptInline();
+    expect(carregadosMeta()).toEqual([]);
+  });
+
+  it("o primeiro toque adianta o download da Meta", () => {
     rodarScriptInline();
     document.dispatchEvent(new Event("pointerdown"));
-
-    const srcs = carregados();
-    expect(srcs.some((s) => s.includes(SRC_META))).toBe(true);
-    expect(srcs.some((s) => s.includes(SRC_OPENAI))).toBe(true);
+    expect(carregadosMeta()).toHaveLength(1);
   });
 
-  it("sem toque nenhum, os 3 s de rede de segurança baixam assim mesmo", () => {
+  it("sem toque nenhum, os 3 s de rede de segurança baixam a Meta assim mesmo", () => {
     // jsdom não tem requestIdleCallback, então este teste cobre justamente o
     // caminho do relógio — o mesmo que salva a aba oculta, onde o
     // requestIdleCallback pode nunca rodar.
     rodarScriptInline();
-    expect(carregados()).toEqual([]);
+    expect(carregadosMeta()).toEqual([]);
 
     vi.advanceTimersByTime(3000);
-    expect(carregados()).toHaveLength(2);
+    expect(carregadosMeta()).toHaveLength(1);
   });
 
-  it("quem vem de anúncio da OpenAI carrega o SDK NA HORA, sem adiamento", () => {
-    // O `oppref` é o identificador de clique que liga a conversão à campanha.
-    // O SDK só o captura quando carrega, lendo location.search — então para
-    // esse visitante o adiamento não pode valer. Sem isto, a atribuição fica
-    // pendurada num detalhe de performance, que é onde ela morre em silêncio.
-    window.history.replaceState({}, "", "/lp?oppref=gAAAAAb123");
-    rodarScriptInline();
-
-    // Nada de avançar relógio, nada de tocar na tela.
-    expect(carregados()).toHaveLength(2);
-  });
-
-  it("sem oppref o adiamento continua valendo (o PageSpeed não regride)", () => {
-    window.history.replaceState({}, "", "/lp");
-    rodarScriptInline();
-    expect(carregados()).toEqual([]);
-  });
-
-  it("baixa uma vez só, mesmo com toque e relógio juntos", () => {
+  it("baixa cada SDK uma vez só, mesmo com toque e relógio juntos", () => {
     rodarScriptInline();
     document.dispatchEvent(new Event("pointerdown"));
     document.dispatchEvent(new Event("pointerdown"));
     vi.advanceTimersByTime(10000);
 
-    expect(carregados()).toHaveLength(2);
+    expect(carregadosMeta()).toHaveLength(1);
+    expect(carregadosOpenai()).toHaveLength(1);
   });
 });

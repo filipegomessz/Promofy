@@ -32,19 +32,41 @@ import type { MouseEvent } from "react";
  * `n.queue` da Meta e o `oaiq.q` da OpenAI existem para isto. O que estava
  * errado era só o LUGAR deles. ⚠️ Adiar pixel é adiar o SDK, nunca o stub.
  *
- * QUANDO O SDK É BAIXADO — no que vier primeiro, uma vez só:
+ * ============================================================================
+ * QUANDO CADA SDK É BAIXADO — e por que os dois são diferentes
+ * ============================================================================
+ *
+ * ⚠️ **OPENAI: NA HORA, SEM ADIAMENTO NENHUM.** Regra de 28/08/2026, e não é
+ * para ser "otimizada" de novo. Motivos, em ordem:
+ *
+ *  - a instrução da OpenAI é pôr o script perto do topo, e nós a estávamos
+ *    contrariando desde o dia em que o pixel entrou;
+ *  - o SDK só captura o `oppref` — o identificador de clique que liga a
+ *    conversão à campanha — no momento em que carrega. Adiar o SDK é pendurar
+ *    a ATRIBUIÇÃO num detalhe de PERFORMANCE, e atribuição vale muito mais do
+ *    que ponto de PageSpeed: sem ela a campanha não aprende e o custo por
+ *    lead sobe. Foi exatamente a reclamação dele em 28/08;
+ *  - o SDK deles pesa ~79 kB e entra `async`, então não bloqueia a pintura.
+ *
+ * Isto CUSTA PageSpeed, de propósito e com o custo assumido. Se algum dia
+ * alguém quiser o ponto de volta, é uma decisão DELE, não uma otimização
+ * silenciosa. Guardado por src/test/pixels.test.ts.
+ *
+ * **META: continua adiada**, no que vier primeiro e uma vez só:
  *
  *  1. o primeiro `pointerdown`. O toque é o aviso de que um clique no botão do
  *     WhatsApp vem a caminho; adiantar o download ali dá ao SDK o tempo do
  *     toque inteiro de vantagem sobre os 250 ms que seguramos antes de abrir
  *     o WhatsApp (ver ESPERA_ANTES_DE_NAVEGAR_MS);
- *  2. o `requestIdleCallback`, como já era antes;
- *  3. um `setTimeout` de 3 s. Este é rede de segurança e resolve uma segunda
- *     falha achada no mesmo dia: **em aba oculta o `requestIdleCallback` pode
- *     simplesmente nunca rodar**, e sem o relógio até o `PageView` se perdia.
+ *  2. o `requestIdleCallback`;
+ *  3. um `setTimeout` de 3 s. Rede de segurança: **em aba oculta o
+ *     `requestIdleCallback` pode simplesmente nunca rodar**, e sem o relógio
+ *     até o `PageView` se perdia.
  *
- * Nada disto pesa no PageSpeed: o Lighthouse não toca na tela, então para ele
- * continua valendo o caminho do ocioso, igual a antes.
+ * Por que a Meta pode continuar adiada: ela está comprovadamente contando, é
+ * o script mais pesado dos dois, e o beacon dela sai em ~10 ms no clique —
+ * folgado antes dos 250 ms. Se um dia a Meta também falhar, a resposta é a
+ * mesma da OpenAI: tirar o adiamento, não inventar.
  *
  * Guardado por src/test/pixels.test.ts, que roda o script inline LIDO DO
  * index.html de verdade — testar uma cópia do trecho não pegaria nada, porque
