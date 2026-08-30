@@ -11,15 +11,23 @@ import { chaveDaRota, type ChaveDeRota } from "./rotas.ts";
 
 // Reexportado para o scripts/prerender.mjs consumir do mesmo bundle: com uma
 // entrada só, o Rollup embute rotas.ts aqui dentro e não emite arquivo separado.
-export { ARQUIVO_DA_ROTA } from "./rotas.ts";
+export { ARQUIVO_DA_ROTA, CLASSE_DO_BODY } from "./rotas.ts";
 
 // Aqui as páginas entram de forma NORMAL, sem lazy: `renderToString` não espera
 // um componente suspenso — ele renderizaria o fallback (vazio) e a página sairia
 // em branco. A tabela de caminhos vem de rotas.ts, então cliente e servidor não
 // podem divergir sobre quais rotas existem.
+//
+// ⚠️ `captacao` e `captacaoLp` são a MESMA página em dois endereços; a segunda
+// recebe `duplicada` para o head sair com noindex + canonical para a raiz.
+// O mapa do cliente (main.tsx) passa exatamente a mesma prop — se divergirem,
+// a hidratação acusa mismatch.
 const PAGINAS: Record<ChaveDeRota, ReactNode> = {
-  home: <Index />,
-  landing: <LandingSimples />,
+  // O `false` é explícito de propósito: o cliente passa `duplicada={false}` e
+  // os dois lados precisam produzir a MESMA árvore, senão a hidratação acusa.
+  captacao: <LandingSimples duplicada={false} />,
+  captacaoLp: <LandingSimples duplicada />,
+  completa: <Index />,
   termos: <Terms />,
   privacidade: <Privacy />,
   contato: <Contact />,

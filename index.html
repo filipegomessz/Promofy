@@ -3,8 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Promofy — Ofertas e Cupons que Valem a Pena</title>
-    <meta name="description" data-rh="true" content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam.">
+    <!-- ⚠️ Estas tags são as da RAIZ, que desde 28/08/2026 é a página de
+         captação (src/pages/LandingSimples.tsx). Elas precisam continuar
+         espelhando o <Helmet> daquela página: o GitHub Pages entrega este
+         HTML estático, e quem não roda JS só vê o que está aqui. Mudou lá?
+         Mudar aqui também, e vice-versa. -->
+    <title>Promofy — Ofertas e Cupons no seu WhatsApp</title>
+    <meta name="description" data-rh="true" content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam, e você sai quando quiser.">
     <meta name="author" content="Promofy" />
     <link rel="icon" type="image/png" href="/favicon.png" />
 
@@ -15,13 +20,13 @@
 
     <link rel="dns-prefetch" href="https://connect.facebook.net" />
     <link rel="dns-prefetch" href="https://www.facebook.com" />
-    <link rel="dns-prefetch" href="https://bzrcdn.openai.com" />
-    <link rel="dns-prefetch" href="https://bzr.openai.com" />
 
-    <!-- Elemento de LCP da landing. Mora em /public com nome fixo justamente
-         para poder ser pré-carregado daqui: asset importado ganha hash no
-         build e o nome não existiria na hora de escrever este HTML. -->
-    <link rel="preload" as="image" href="/promofy-avatar.jpg" fetchpriority="high" />
+    <!-- MARCADOR: PRELOAD DA CAPTACAO
+         O preload do avatar (elemento de LCP da captação) NÃO fica aqui: este
+         template vale para todas as rotas, e nas outras seriam 11 kB baixados
+         em prioridade alta sem nunca serem usados — o Lighthouse inclusive
+         marca isso. Quem o injeta, só nas rotas de captação, é o
+         scripts/prerender.mjs. Não apague esta linha: é ela que ele procura. -->
 
     <!-- A Inter agora é servida por este mesmo domínio (ver o @font-face em
          src/index.css). Antes vinha do Google Fonts, o que obrigava o
@@ -34,10 +39,10 @@
          o arquivo baixado duas vezes. -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin-var.woff2" crossorigin />
 
-    <meta property="og:title" data-rh="true" content="Promofy — Ofertas e Cupons que Valem a Pena">
-    <meta name="twitter:title" data-rh="true" content="Promofy — Ofertas e Cupons que Valem a Pena">
-    <meta property="og:description" data-rh="true" content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam.">
-    <meta name="twitter:description" data-rh="true" content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam.">
+    <meta property="og:title" data-rh="true" content="Promofy — Ofertas e Cupons no seu WhatsApp">
+    <meta name="twitter:title" data-rh="true" content="Promofy — Ofertas e Cupons no seu WhatsApp">
+    <meta property="og:description" data-rh="true" content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam.">
+    <meta name="twitter:description" data-rh="true" content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam.">
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/pQ3GHjbnAmh4RBc51EsInzhQegv2/social-images/social-1777444735874-ChatGPT_Image_9_de_fev._de_2026,_01_00_46.webp">
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/pQ3GHjbnAmh4RBc51EsInzhQegv2/social-images/social-1777444735874-ChatGPT_Image_9_de_fev._de_2026,_01_00_46.webp">
   </head>
@@ -46,14 +51,19 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- OS DOIS PIXELS. Regra: a fila existe desde o primeiro instante, o SDK
+    <!-- PIXEL DA META. Regra: a fila existe desde o primeiro instante, o SDK
          pesado chega depois. Comentário aqui é curto DE PROPÓSITO — o Vite não
          minifica script inline, então tudo que se escreve neste bloco viaja em
          cada página. O porquê inteiro está em src/lib/lead.ts, que é
-         compilado e onde comentário sai de graça. -->
+         compilado e onde comentário sai de graça.
+
+         O pixel do OpenAI Ads foi REMOVIDO em 28/08/2026, a pedido dele, ao
+         parar de anunciar por lá. Se um dia voltar, o histórico tem tudo
+         (branch `troca-paginas-sem-openai`) e o [[promofy-gotchas]] guarda as
+         armadilhas — principalmente o `oppref`. -->
     <script>
       (function () {
-        var estado = (window.__promofyPixels = { meta: false, openai: false });
+        var estado = (window.__promofyPixels = { meta: false });
 
         /* 1. Stub da Meta — trecho oficial menos o rabo que inseria o <script>. */
         !function(f,n){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -63,45 +73,24 @@
         fbq('init', '1561896425355572');
         fbq('track', 'PageView');
 
-        /* 2. Stub da OpenAI — mesma subtração. */
-        !function(w){if(w.oaiq)return;var q=function(){q.q.push(arguments)};q.q=[];w.oaiq=q}(window);
-        // debug liga sozinho fora do site publicado; em apromofy.online é sempre false.
-        var emDesenvolvimento = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-        oaiq("init", { pixelId: "45eXnE333nLqBeWBfwzcL4", debug: emDesenvolvimento });
-
-        /* 3. Aí sim, o material pesado — atrasado. */
-        function carregar(url, aoChegar) {
+        /* 2. Aí sim, o material pesado — atrasado. */
+        var jaBaixou = false;
+        function baixarSdk() {
+          if (jaBaixou) return;
+          jaBaixou = true;
           var j = document.createElement("script");
           j.async = true;
-          j.src = url;
-          j.onload = aoChegar;
+          j.src = "https://connect.facebook.net/en_US/fbevents.js";
+          j.onload = function () { estado.meta = true; };
           var primeiro = document.getElementsByTagName("script")[0];
           primeiro.parentNode.insertBefore(j, primeiro);
         }
 
-        // A OpenAI carrega AGORA, sem adiamento nenhum — é a instrução deles
-        // ("perto do topo") e nós a estávamos contrariando. Ver src/lib/lead.ts
-        // para o motivo: atribuição vale mais do que ponto de PageSpeed.
-        carregar("https://bzrcdn.openai.com/sdk/oaiq.min.js", function () {
-          estado.openai = true;
-        });
-
-        // A Meta continua adiada: está comprovadamente contando, é o script
-        // mais pesado dos dois, e o beacon dela sai em ~10 ms no clique.
-        var jaBaixouMeta = false;
-        function baixarMeta() {
-          if (jaBaixouMeta) return;
-          jaBaixouMeta = true;
-          carregar("https://connect.facebook.net/en_US/fbevents.js", function () {
-            estado.meta = true;
-          });
-        }
-
-        // Toque, ocioso ou 3 s — o que vier primeiro; `jaBaixouMeta` garante
-        // uma vez só. O porquê de cada um está em src/lib/lead.ts.
-        document.addEventListener("pointerdown", baixarMeta, { capture: true, once: true, passive: true });
-        if ("requestIdleCallback" in window) requestIdleCallback(baixarMeta, { timeout: 3000 });
-        window.setTimeout(baixarMeta, 3000);
+        // Toque, ocioso ou 3 s — o que vier primeiro; `jaBaixou` garante uma
+        // vez só. O porquê de cada um está em src/lib/lead.ts.
+        document.addEventListener("pointerdown", baixarSdk, { capture: true, once: true, passive: true });
+        if ("requestIdleCallback" in window) requestIdleCallback(baixarSdk, { timeout: 3000 });
+        window.setTimeout(baixarSdk, 3000);
       })();
     </script>
     <noscript><img height="1" width="1" style="display:none"

@@ -2,7 +2,7 @@ import type { MouseEvent } from "react";
 
 /**
  * ============================================================================
- * COMO OS DOIS PIXELS CARREGAM — e por que é assim
+ * COMO O PIXEL DA META CARREGA — e por que é assim
  * ============================================================================
  *
  * O contrato mora aqui, e não no index.html, por um motivo prático: o Vite
@@ -13,46 +13,24 @@ import type { MouseEvent } from "react";
  *
  * A REGRA: a fila existe desde o primeiro instante; o SDK pesado chega depois.
  *
- * O stub de cada pixel — o objeto `fbq`/`oaiq` que só empilha chamadas numa
- * fila — é criado de forma SÍNCRONA no index.html. Só a inserção do
- * `<script src=…>` é que fica adiada, para os SDKs não disputarem banda e
- * processador com a primeira pintura.
+ * O stub — o objeto `fbq` que só empilha chamadas numa fila — é criado de
+ * forma SÍNCRONA no index.html. Só a inserção do `<script src=…>` fica
+ * adiada, para o SDK não disputar banda e processador com a primeira pintura.
  *
- * POR QUE MUDOU (26/08/2026). Até esta data o stub era criado DENTRO da função
- * adiada para o `requestIdleCallback`. Enquanto ela não rodava, `window.fbq` e
- * `window.oaiq` não existiam — e o `trackLead`, logo abaixo, checa justamente
- * `typeof window.fbq === "function"` antes de disparar. Resultado: quem caísse
- * na página e apertasse o botão do WhatsApp antes do respiro do navegador
- * tinha a conversão **descartada em silêncio, nas duas plataformas**. Sem erro
- * no console, sem teste caindo: só um lead a menos no painel, semanas depois.
- * E atinge justamente o visitante que chega convencido e aperta na hora — o
- * melhor que o anúncio compra.
+ * POR QUE É ASSIM (26/08/2026). Até essa data o stub era criado DENTRO da
+ * função adiada. Enquanto ela não rodava, `window.fbq` não existia — e o
+ * `trackLead`, logo abaixo, checa `typeof window.fbq === "function"` antes de
+ * disparar. Resultado: quem caísse na página e apertasse o botão do WhatsApp
+ * antes do respiro do navegador tinha a conversão **descartada em silêncio**.
+ * Sem erro no console, sem teste caindo: só um lead a menos no painel,
+ * semanas depois. E atinge justamente o visitante que chega convencido e
+ * aperta na hora — o melhor que o anúncio compra.
  *
- * Ter fila é como as duas plataformas projetaram os próprios trechos: o
- * `n.queue` da Meta e o `oaiq.q` da OpenAI existem para isto. O que estava
- * errado era só o LUGAR deles. ⚠️ Adiar pixel é adiar o SDK, nunca o stub.
+ * Ter fila é como a Meta projetou o próprio trecho: o `n.queue` existe para
+ * isto. O que estava errado era só o LUGAR dele.
+ * ⚠️ Adiar pixel é adiar o SDK, nunca o stub.
  *
- * ============================================================================
- * QUANDO CADA SDK É BAIXADO — e por que os dois são diferentes
- * ============================================================================
- *
- * ⚠️ **OPENAI: NA HORA, SEM ADIAMENTO NENHUM.** Regra de 28/08/2026, e não é
- * para ser "otimizada" de novo. Motivos, em ordem:
- *
- *  - a instrução da OpenAI é pôr o script perto do topo, e nós a estávamos
- *    contrariando desde o dia em que o pixel entrou;
- *  - o SDK só captura o `oppref` — o identificador de clique que liga a
- *    conversão à campanha — no momento em que carrega. Adiar o SDK é pendurar
- *    a ATRIBUIÇÃO num detalhe de PERFORMANCE, e atribuição vale muito mais do
- *    que ponto de PageSpeed: sem ela a campanha não aprende e o custo por
- *    lead sobe. Foi exatamente a reclamação dele em 28/08;
- *  - o SDK deles pesa ~79 kB e entra `async`, então não bloqueia a pintura.
- *
- * Isto CUSTA PageSpeed, de propósito e com o custo assumido. Se algum dia
- * alguém quiser o ponto de volta, é uma decisão DELE, não uma otimização
- * silenciosa. Guardado por src/test/pixels.test.ts.
- *
- * **META: continua adiada**, no que vier primeiro e uma vez só:
+ * QUANDO O SDK É BAIXADO — no que vier primeiro, uma vez só:
  *
  *  1. o primeiro `pointerdown`. O toque é o aviso de que um clique no botão do
  *     WhatsApp vem a caminho; adiantar o download ali dá ao SDK o tempo do
@@ -63,14 +41,17 @@ import type { MouseEvent } from "react";
  *     `requestIdleCallback` pode simplesmente nunca rodar**, e sem o relógio
  *     até o `PageView` se perdia.
  *
- * Por que a Meta pode continuar adiada: ela está comprovadamente contando, é
- * o script mais pesado dos dois, e o beacon dela sai em ~10 ms no clique —
- * folgado antes dos 250 ms. Se um dia a Meta também falhar, a resposta é a
- * mesma da OpenAI: tirar o adiamento, não inventar.
- *
  * Guardado por src/test/pixels.test.ts, que roda o script inline LIDO DO
  * index.html de verdade — testar uma cópia do trecho não pegaria nada, porque
  * o defeito estava no arquivo.
+ *
+ * ----------------------------------------------------------------------------
+ * O PIXEL DO OPENAI ADS SAIU DAQUI em 28/08/2026, a pedido dele, ao parar de
+ * anunciar pela OpenAI. Se um dia voltar: o histórico do git tem o código
+ * inteiro, e o [[promofy-gotchas]] guarda as armadilhas que já custaram caro —
+ * em especial o `oppref`, o identificador de clique sem o qual a conversão é
+ * aceita com HTTP 202 e mesmo assim fica órfã, sem alimentar a campanha.
+ * ============================================================================
  */
 
 declare global {
@@ -78,14 +59,11 @@ declare global {
     /** Pixel da Meta. O index.html cria o stub com fila de forma SÍNCRONA, então
      *  daqui isto é sempre uma função — mesmo antes de o SDK ter chegado. */
     fbq?: (...args: unknown[]) => void;
-    /** Pixel do OpenAI Ads. Mesma coisa: stub com fila criado de forma síncrona
-     *  no index.html; enquanto o SDK não chega, empilha as chamadas em oaiq.q. */
-    oaiq?: (...args: unknown[]) => void;
-    /** Posto pelo index.html: diz se o SDK de cada pixel já terminou de carregar.
-     *  Existe só para o log abaixo poder separar "enfileirado" de "entregue" —
-     *  com o stub sempre no ar, `typeof window.fbq === "function"` virou sempre
-     *  verdadeiro e sozinho não informa mais nada. */
-    __promofyPixels?: { meta: boolean; openai: boolean };
+    /** Posto pelo index.html: diz se o SDK já terminou de carregar. Existe só
+     *  para o log abaixo poder separar "enfileirado" de "entregue" — com o stub
+     *  sempre no ar, `typeof window.fbq === "function"` virou sempre verdadeiro
+     *  e sozinho não informa mais nada. */
+    __promofyPixels?: { meta: boolean };
   }
 }
 
@@ -102,51 +80,37 @@ export const WHATSAPP_CHANNEL =
 let __leadFireCount = 0;
 
 /**
- * Janela que a gente segura antes de abrir o WhatsApp, para os beacons dos
- * pixels saírem. Existe porque no celular a troca de app pode descartar
- * requisição pendente.
+ * Janela que a gente segura antes de abrir o WhatsApp, para o beacon do pixel
+ * sair. Existe porque no celular a troca de app pode descartar requisição
+ * pendente.
  *
- * Os dois pixels se comportam de forma BEM diferente aqui, medido no
- * navegador em 24/08/2026 — vale saber antes de estranhar o painel de rede:
+ * Medido no navegador: a Meta dispara na hora, **~10-14 ms depois do clique**,
+ * então cabe folgado nos 250 ms. Não esticamos essa espera: mais de um segundo
+ * de tela parada logo depois do toque é o pior lugar possível para uma pausa.
  *
- * - Meta: dispara na hora, ~14 ms depois do clique. Cabe folgado nos 250 ms.
- * - OpenAI: acumula em lote e só descarrega num temporizador de ~1 s, ou
- *   seja, MAIS TARDE que os 250 ms. Parece perda de evento, mas não é: o SDK
- *   deles descarrega na hora (~2 ms) quando a aba fica oculta, que é
- *   exatamente o que o navegador faz ao abrir o WhatsApp. Testado forçando
- *   visibilitychange/pagehide.
- *
- * Por isso NÃO esticamos a espera para ~1,3 s: não resolveria nada que o
- * flush por visibilidade já não resolva, e custaria mais de um segundo de
- * tela parada depois do toque — o pior lugar possível para uma pausa.
- *
- * E não precisamos esticar nem para o caso do SDK ainda não ter chegado: o
- * index.html começa a baixar os dois no primeiro `pointerdown`, que acontece
- * ANTES do clique. Quando estes 250 ms terminam, o download já teve o tempo
- * do toque inteiro de vantagem. E se mesmo assim não tiver chegado, a chamada
- * fica na fila do stub e sobe quando ele carregar — não se perde.
+ * E não precisamos esticar nem para o caso de o SDK ainda não ter chegado: o
+ * index.html começa a baixar no primeiro `pointerdown`, que acontece ANTES do
+ * clique. E se mesmo assim não tiver chegado, a chamada fica na fila do stub e
+ * sobe quando ele carregar — não se perde.
  */
 const ESPERA_ANTES_DE_NAVEGAR_MS = 250;
 
-const BEACONS = [
-  { plataforma: "meta", padrao: /facebook\.com\/tr/ },
-  { plataforma: "openai", padrao: /bzr\.openai\.com/ },
-];
+const BEACON_META = /facebook\.com\/tr/;
 
 /** Quanto tempo esperamos pelo beacon antes de desistir de observar. */
 const OBSERVAR_BEACON_POR_MS = 4000;
 
 /**
- * Estágio 2 da auditoria: registra no console QUANDO a requisição de cada
- * pixel de fato termina, e não apenas quando a função foi chamada.
+ * Estágio 2 da auditoria: registra no console QUANDO a requisição do pixel de
+ * fato termina, e não apenas quando a função foi chamada.
  *
  * A distinção não é preciosismo. Entre "chamei o SDK" e "a plataforma
- * contabilizou a conversão" existem, no mínimo: o lote do SDK, o envio, a
- * ingestão da plataforma, a deduplicação e a janela de atribuição. Daqui de
- * dentro do navegador dá para observar SÓ até o envio — e nem o status HTTP,
- * porque as duas respostas são cross-origin sem Timing-Allow-Origin. Por isso
- * o log fala "requisição concluída", nunca "conversão registrada": afirmar o
- * segundo a partir do primeiro seria inventar.
+ * contabilizou a conversão" existem, no mínimo: o envio, a ingestão da
+ * plataforma, a deduplicação e a janela de atribuição. Daqui de dentro do
+ * navegador dá para observar SÓ até o envio — e nem o status HTTP, porque a
+ * resposta é cross-origin sem Timing-Allow-Origin. Por isso o log fala
+ * "requisição concluída", nunca "conversão registrada": afirmar o segundo a
+ * partir do primeiro seria inventar.
  *
  * É diagnóstico de desenvolvimento: no celular a aba já foi para o fundo e
  * ninguém está lendo console. Não altera o disparo em nada.
@@ -155,104 +119,72 @@ const observarBeacons = () => {
   if (typeof PerformanceObserver === "undefined") return;
 
   const t0 = performance.now();
-  const pendentes = new Set(BEACONS.map((b) => b.plataforma));
   let encerrado = false;
 
-  const encerrar = (observador: PerformanceObserver) => {
+  const encerrar = (observador: PerformanceObserver, viu: boolean) => {
     if (encerrado) return;
     encerrado = true;
     observador.disconnect();
-    pendentes.forEach((p) => {
+    if (!viu) {
       console.info(
-        `[Lead] ${p}: nenhuma requisição observada em ${OBSERVAR_BEACON_POR_MS} ms. Pode ter saído depois da aba ficar oculta — o que é o normal no celular.`,
+        `[Lead] meta: nenhuma requisição observada em ${OBSERVAR_BEACON_POR_MS} ms. Pode ter saído depois da aba ficar oculta — o que é o normal no celular.`,
       );
-    });
+    }
   };
 
   const observador = new PerformanceObserver((lista) => {
     for (const entrada of lista.getEntries()) {
-      const alvo = BEACONS.find((b) => b.padrao.test(entrada.name));
-      if (!alvo || !pendentes.has(alvo.plataforma)) continue;
-      pendentes.delete(alvo.plataforma);
+      if (!BEACON_META.test(entrada.name)) continue;
       console.info(
-        `[Lead] ${alvo.plataforma}: requisição concluída ${Math.round(entrada.startTime - t0)} ms após o clique (status HTTP não é visível daqui — cross-origin).`,
+        `[Lead] meta: requisição concluída ${Math.round(entrada.startTime - t0)} ms após o clique (status HTTP não é visível daqui — cross-origin).`,
       );
+      encerrar(observador, true);
+      return;
     }
-    if (pendentes.size === 0) encerrar(observador);
   });
 
   observador.observe({ type: "resource", buffered: false });
-  window.setTimeout(() => encerrar(observador), OBSERVAR_BEACON_POR_MS);
+  window.setTimeout(() => encerrar(observador, false), OBSERVAR_BEACON_POR_MS);
 };
 
 /**
- * Dispara a conversão nos dois pixels e só então abre o link.
+ * Dispara a conversão no pixel e só então abre o link.
  *
- * A conversão do site é UMA só — "clicou no botão para entrar no grupo" —
- * e é reportada com o nome que cada plataforma espera: "Lead" na Meta,
- * "lead_created" na OpenAI. Ter os dois disparos aqui, num ponto único,
- * é o que impede que um evolua e o outro fique para trás.
+ * A conversão do site é UMA só — "clicou no botão para entrar no grupo" — e é
+ * reportada como "Lead" na Meta. Manter o disparo num ponto único é o que
+ * impede que uma página evolua e a outra fique para trás.
  *
- * Não há envio pela Conversions API de nenhuma das duas: seria server-side
- * e exigiria uma chave secreta, que num site estático ficaria exposta no
- * código-fonte para qualquer visitante forjar conversões.
+ * Não há envio pela Conversions API: seria server-side e exigiria uma chave
+ * secreta, que num site estático ficaria exposta no código-fonte para qualquer
+ * visitante forjar conversões.
  */
 export const trackLead = (
   e?: MouseEvent<HTMLAnchorElement | HTMLButtonElement>,
   href?: string,
 ) => {
   const temFbq = typeof window !== "undefined" && typeof window.fbq === "function";
-  const temOaiq = typeof window !== "undefined" && typeof window.oaiq === "function";
   let eventID: string | null = null;
 
   if (temFbq) {
     eventID = `lead_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     window.fbq!("track", "Lead", { content_name: href ?? "unknown" }, { eventID });
-  }
-
-  if (temOaiq) {
-    window.oaiq!("measure", "lead_created", { type: "customer_action" });
-  }
-
-  if (temFbq || temOaiq) {
     __leadFireCount += 1;
   }
 
-  // Estágio 1. Desde 26/08/2026 o index.html cria os stubs de forma síncrona, e
-  // com isso a pergunta "o pixel existe?" virou sempre sim. O que ainda varia —
-  // e é o que interessa quando faltar lead no painel — é se a chamada FOI PARA
-  // O SDK ou apenas para a fila, esperando ele chegar. Fila não é perda: ela
-  // sobe assim que o SDK carrega. Perda era o que acontecia antes, quando não
-  // havia nem stub nem fila e a chamada era descartada aqui mesmo.
-  // Nos três casos, nada saiu do navegador ainda — ver observarBeacons().
-  const sdks = window.__promofyPixels;
-  const situacao = (existe: boolean, sdkPronto: boolean | undefined) =>
-    !existe ? "INDISPONIVEL" : sdkPronto ? "entregue ao SDK" : "enfileirado";
-
-  // Terceiro estágio, aberto em 28/08/2026: a conversão está ATRIBUÍDA?
-  //
-  // Um evento aceito não é um evento atribuído. A OpenAI liga a conversão à
-  // campanha por um identificador de clique, o `oppref`, que ela pendura na
-  // URL de destino do anúncio; o SDK o captura e guarda no cookie `__oppref`
-  // por 30 dias. Sem ele o evento chega, é aceito com HTTP 202, e fica ÓRFÃO:
-  // não conta para a campanha e não alimenta a otimização — que é o pior tipo
-  // de falha, porque de fora parece tudo certo. Ausência é NORMAL em quem vem
-  // do orgânico ou da Meta; o que importa é ver isso em quem veio do anúncio.
-  const clickRefOpenai =
-    document.cookie.match(/(?:^|;\s*)__oppref=([^;]*)/)?.[1] ?? null;
+  // Com o stub síncrono no index.html, a pergunta "o pixel existe?" virou
+  // sempre sim. O que ainda varia — e é o que interessa quando faltar lead no
+  // painel — é se a chamada FOI PARA O SDK ou apenas para a fila, esperando
+  // ele chegar. Fila não é perda: ela sobe assim que o SDK carrega. Perda era
+  // o que acontecia antes, quando não havia nem stub nem fila e a chamada era
+  // descartada aqui mesmo. Nos três casos, nada saiu do navegador ainda — ver
+  // observarBeacons().
+  const sdkPronto = window.__promofyPixels?.meta;
+  const situacao = !temFbq ? "INDISPONIVEL" : sdkPronto ? "entregue ao SDK" : "enfileirado";
 
   console.info(
-    `[Lead] clique #${__leadFireCount} — meta=${situacao(temFbq, sdks?.meta)} openai=${situacao(temOaiq, sdks?.openai)} atribuicaoOpenAI=${clickRefOpenai ?? "AUSENTE (evento ficara orfao)"} eventID=${eventID ?? "n/a"} href=${href ?? "n/a"}`,
+    `[Lead] clique #${__leadFireCount} — meta=${situacao} eventID=${eventID ?? "n/a"} href=${href ?? "n/a"}`,
   );
   observarBeacons();
-
-  // Veio de anúncio da OpenAI mas o identificador não foi capturado: isso é
-  // contradição, não é o caso normal do visitante orgânico. Vale barulho.
-  if (!clickRefOpenai && window.location.search.includes("oppref=")) {
-    console.error(
-      "[Lead] a URL trouxe oppref mas o cookie __oppref está vazio — o SDK da OpenAI não capturou o identificador do clique. Esta conversão NÃO será atribuída à campanha.",
-    );
-  }
 
   // Com o stub síncrono no index.html, cair aqui deixou de ser questão de
   // tempo e passou a significar que o script inline NÃO RODOU: bloqueador de
@@ -260,11 +192,8 @@ export const trackLead = (
   if (!temFbq) {
     console.warn("[Lead] fbq indisponível — o stub do index.html não rodou (bloqueador? CSP?)");
   }
-  if (!temOaiq) {
-    console.warn("[Lead] oaiq indisponível — o stub do index.html não rodou (bloqueador? CSP?)");
-  }
 
-  // Garante que os eventos sejam enviados antes de navegar (especialmente no
+  // Garante que o evento seja enviado antes de navegar (especialmente no
   // mobile, onde abrir o WhatsApp pode descartar requisições pendentes).
   if (e && href) {
     e.preventDefault();
