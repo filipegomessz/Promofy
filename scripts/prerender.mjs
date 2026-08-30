@@ -28,7 +28,6 @@ import { render, ARQUIVO_DA_ROTA, CLASSE_DO_BODY } from "../dist-ssr/entry-serve
  */
 const MODULO_DA_ROTA = {
   captacao: "src/pages/LandingSimples.tsx",
-  captacaoLp: "src/pages/LandingSimples.tsx",
   completa: "src/pages/Index.tsx",
   termos: "src/pages/Terms.tsx",
   privacidade: "src/pages/Privacy.tsx",
@@ -137,7 +136,7 @@ if (!template.includes(MARCADOR_PRELOAD)) {
  * próprio Lighthouse aponta. Por isso ele entra aqui, por rota.
  */
 const PRELOAD_AVATAR =
-  '<link rel="preload" as="image" href="/promofy-avatar.jpg" fetchpriority="high">';
+  '<link rel="preload" as="image" href="/promofy-avatar.webp" fetchpriority="high">';
 
 let gravados = 0;
 for (const [chave, { caminho, arquivo, alias }] of Object.entries(ARQUIVO_DA_ROTA)) {

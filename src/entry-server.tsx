@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
 import { HelmetProvider, type HelmetServerState } from "react-helmet-async";
-import { Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import Index from "./pages/Index.tsx";
 import LandingSimples from "./pages/LandingSimples.tsx";
 import Terms from "./pages/Terms.tsx";
@@ -18,15 +18,13 @@ export { ARQUIVO_DA_ROTA, CLASSE_DO_BODY } from "./rotas.ts";
 // em branco. A tabela de caminhos vem de rotas.ts, então cliente e servidor não
 // podem divergir sobre quais rotas existem.
 //
-// ⚠️ `captacao` e `captacaoLp` são a MESMA página em dois endereços; a segunda
-// recebe `duplicada` para o head sair com noindex + canonical para a raiz.
-// O mapa do cliente (main.tsx) passa exatamente a mesma prop — se divergirem,
-// a hidratação acusa mismatch.
+// ⚠️ O <Suspense> que envolvia isto SAIU em 30/08/2026. Nenhuma página aqui é
+// lazy, então ele não protegia nada — e o renderToString emitia <!--$--> em
+// volta do conteúdo, marcadores que só serviam para o React reconciliar um
+// limite que não existe. Fora os bytes, são comentários que o Preact (que o
+// navegador usa desde 30/08) não espera na hidratação.
 const PAGINAS: Record<ChaveDeRota, ReactNode> = {
-  // O `false` é explícito de propósito: o cliente passa `duplicada={false}` e
-  // os dois lados precisam produzir a MESMA árvore, senão a hidratação acusa.
-  captacao: <LandingSimples duplicada={false} />,
-  captacaoLp: <LandingSimples duplicada />,
+  captacao: <LandingSimples />,
   completa: <Index />,
   termos: <Terms />,
   privacidade: <Privacy />,
@@ -53,7 +51,7 @@ export const render = (caminho: string) => {
   const contexto: ContextoHelmet = {};
   const corpo = renderToString(
     <HelmetProvider context={contexto}>
-      <Suspense fallback={null}>{PAGINAS[chaveDaRota(caminho)]}</Suspense>
+      {PAGINAS[chaveDaRota(caminho)]}
     </HelmetProvider>,
   );
 
