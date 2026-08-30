@@ -62,9 +62,16 @@ const IndexHead = () => (
       name="description"
       content="Receba ofertas e cupons exclusivos no WhatsApp gratuitamente. Curadoria real, sem spam."
     />
-    <link rel="canonical" href="https://apromofy.online/" />
+    {/* `noindex` deliberado desde 28/08/2026. Esta página e a captação da raiz
+        falam do mesmo assunto; indexar as duas as faria disputar a mesma
+        posição no Google, e o resultado clássico é as duas perderem. A raiz é
+        a que deve aparecer na busca. ⚠️ O preço está registrado e é conhecido:
+        esta é a página com conteúdo de verdade (FAQ, marcas, rodapé), e é ela
+        que teria mais chance de ranquear. Foi a troca escolhida por ele. */}
+    <meta name="robots" content="noindex, follow" />
+    <link rel="canonical" href="https://apromofy.online/ofertas" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://apromofy.online/" />
+    <meta property="og:url" content="https://apromofy.online/ofertas" />
     <meta property="og:title" content="Promofy — Ofertas e Cupons que Valem a Pena" />
     <meta
       property="og:description"

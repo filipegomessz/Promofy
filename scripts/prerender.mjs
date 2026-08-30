@@ -15,11 +15,26 @@
 // O script falha alto se o template não tiver a cara esperada. É de propósito:
 // é melhor quebrar o build do que publicar um HTML meio montado.
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { render, ARQUIVO_DA_ROTA } from "../dist-ssr/entry-server.js";
+import { render, ARQUIVO_DA_ROTA, CLASSE_DO_BODY } from "../dist-ssr/entry-server.js";
+
+/**
+ * Qual módulo de página cada rota carrega no navegador. Precisa bater com o
+ * mapa CARREGAR do src/main.tsx — é a partir daqui que se descobre, no
+ * manifesto do Vite, o nome com hash do pedaço de cada rota.
+ */
+const MODULO_DA_ROTA = {
+  captacao: "src/pages/LandingSimples.tsx",
+  captacaoLp: "src/pages/LandingSimples.tsx",
+  completa: "src/pages/Index.tsx",
+  termos: "src/pages/Terms.tsx",
+  privacidade: "src/pages/Privacy.tsx",
+  contato: "src/pages/Contact.tsx",
+  404: "src/pages/NotFound.tsx",
+};
 
 const raizDoProjeto = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(raizDoProjeto, "dist");
@@ -72,6 +87,58 @@ const embutirCss = (html) => {
   return html.replace(link[0], `<style>${css}</style>`);
 };
 
+/**
+ * O manifesto do Vite: diz qual arquivo com hash saiu de cada módulo-fonte.
+ * Usamos para descobrir o pedaço de JavaScript de cada página.
+ */
+const caminhoDoManifesto = join(dist, ".vite", "manifest.json");
+const manifesto = JSON.parse(readFileSync(caminhoDoManifesto, "utf8"));
+
+/**
+ * Escreve o `modulepreload` do pedaço DAQUELA rota (e das dependências dele).
+ *
+ * Sem isto o import dinâmico do main.tsx viraria uma cascata: o navegador
+ * baixaria o main, só então descobriria qual pedaço pedir, e faria uma segunda
+ * ida e volta antes de conseguir hidratar. Com o preload no documento, os dois
+ * descem em paralelo — o isolamento entre as páginas sai de graça.
+ */
+const preloadDaPagina = (chave, htmlAteAgora) => {
+  const fonte = MODULO_DA_ROTA[chave];
+  const entrada = manifesto[fonte];
+  if (!entrada) {
+    throw new Error(
+      `prerender: o manifesto não tem "${fonte}" (rota ${chave}). O mapa MODULO_DA_ROTA saiu de sincronia com o CARREGAR do main.tsx?`,
+    );
+  }
+
+  // `imports` traz os pedaços compartilhados de que esta página depende
+  // (react-vendor, lead...). Pré-carregar todos evita cascata em série.
+  const arquivos = [entrada.file, ...(entrada.imports ?? []).map((i) => manifesto[i]?.file)];
+
+  return [...new Set(arquivos.filter(Boolean))]
+    // O Vite já escreveu no template o modulepreload dos pedaços que a entrada
+    // importa de forma estática. Repetir não quebra nada, mas são bytes à toa
+    // em cada HTML — e a duplicata confunde quem for ler o documento depois.
+    .filter((f) => !htmlAteAgora.includes(f))
+    .map((f) => `<link rel="modulepreload" crossorigin href="/${f}">`)
+    .join("\n    ");
+};
+
+const MARCADOR_PRELOAD = "<!-- MARCADOR: PRELOAD DA CAPTACAO";
+if (!template.includes(MARCADOR_PRELOAD)) {
+  throw new Error(
+    "prerender: não achei o marcador do preload da captação no index.html. Alguém apagou o comentário que serve de âncora.",
+  );
+}
+
+/**
+ * O avatar é o elemento de LCP da captação e só dela. Pré-carregar em TODAS as
+ * rotas seriam 11 kB em prioridade alta desperdiçados nas outras — item que o
+ * próprio Lighthouse aponta. Por isso ele entra aqui, por rota.
+ */
+const PRELOAD_AVATAR =
+  '<link rel="preload" as="image" href="/promofy-avatar.jpg" fetchpriority="high">';
+
 let gravados = 0;
 for (const [chave, { caminho, arquivo, alias }] of Object.entries(ARQUIVO_DA_ROTA)) {
   const { corpo, head } = render(caminho);
@@ -87,10 +154,22 @@ for (const [chave, { caminho, arquivo, alias }] of Object.entries(ARQUIVO_DA_ROT
     );
   }
 
+  // A classe do <body> vem escrita no documento, e não de um useEffect: a
+  // captação é a única tela clara de um site escuro, e vindo do efeito ela
+  // pintava ESCURA até o JavaScript hidratar — flash de tema errado na
+  // primeira dobra, justo na página principal.
+  const classeDoBody = CLASSE_DO_BODY[chave];
+
   // data-rota diz ao main.tsx que este HTML corresponde à URL atual e que dá
   // para hidratar em vez de renderizar do zero.
-  const html = embutirCss(limparHead(template))
-    .replace("</head>", `  ${head}\n  </head>`)
+  const base = embutirCss(limparHead(template)).replace(
+    MARCADOR_PRELOAD,
+    `${classeDoBody ? PRELOAD_AVATAR + "\n    " : ""}${MARCADOR_PRELOAD}`,
+  );
+
+  const html = base
+    .replace("</head>", `  ${preloadDaPagina(chave, base)}\n  ${head}\n  </head>`)
+    .replace("<body>", classeDoBody ? `<body class="${classeDoBody}">` : "<body>")
     .replace(MARCADOR_RAIZ, `<div id="root" data-rota="${normalizar(caminho)}">${corpo}</div>`);
 
   for (const nome of alias ? [arquivo, alias] : [arquivo]) {
@@ -102,5 +181,8 @@ for (const [chave, { caminho, arquivo, alias }] of Object.entries(ARQUIVO_DA_ROT
     console.log(`prerender: ${nome.padEnd(24)} ${(corpo.length / 1024).toFixed(1)} kB de HTML${nota}`);
   }
 }
+
+// O manifesto era só para montar os preloads; não tem por que ir para o ar.
+rmSync(join(dist, ".vite"), { recursive: true, force: true });
 
 console.log(`prerender: ${gravados} rotas gravadas.`);

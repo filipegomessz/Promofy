@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { CircleCheckBig, Users } from "lucide-react";
 import { WHATSAPP_GROUP, trackLead } from "@/lib/lead";
+import type { PropsDePagina } from "@/rotas";
 
 // Nada de VISUAL nesta tela depende do <Helmet>: o fundo claro e as animações
 // moram em index.css. É de propósito — o Helmet só aplica no `requestAnimation-
@@ -27,30 +28,35 @@ const WhatsAppGlyph = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Esta tela vive em /lp, e a raiz do site é a home completa. A canonical
-// PRECISA apontar para /lp: as duas páginas falam do mesmo assunto, e se
-// ambas se declarassem "/" o buscador teria dois conteúdos disputando o
-// mesmo endereço — o clássico jeito de as duas perderem posição.
-// O `noindex` é deliberado: esta é uma página de destino de anúncio, feita
-// para quem chega por link pago. Não há motivo para disputar busca orgânica
-// com a home, e é ela que deve aparecer no Google.
-const LandingSimplesHead = () => (
+// Desde 28/08/2026 esta tela é a PRINCIPAL e mora na raiz. O endereço antigo
+// (`/lp`) continua servindo exatamente esta mesma página, para não quebrar
+// anúncio que já esteja no ar apontando para lá — e é só nesse caso que
+// `duplicada` vem verdadeiro.
+//
+// Por que `duplicada` muda o head: o mesmo conteúdo em dois endereços faz os
+// dois disputarem a mesma posição no Google, e o clássico resultado é as duas
+// perderem. Então a raiz é a indexável e `/lp` se declara cópia dela.
+//
+// ⚠️ Este head PRECISA continuar espelhando o que está escrito no index.html:
+// o GitHub Pages entrega aquele HTML estático, e quem não roda JS (parte dos
+// crawlers, preview de link) só vê aquilo. Mudou aqui? Mudar lá também.
+const LandingSimplesHead = ({ duplicada }: PropsDePagina) => (
   <Helmet>
-    <title>Promofy — entre no grupo de ofertas</title>
+    <title>Promofy — Ofertas e Cupons no seu WhatsApp</title>
     <meta
       name="description"
       content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam, e você sai quando quiser."
     />
-    <meta name="robots" content="noindex, follow" />
-    <link rel="canonical" href="https://apromofy.online/lp" />
+    {duplicada && <meta name="robots" content="noindex, follow" />}
+    <link rel="canonical" href="https://apromofy.online/" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://apromofy.online/lp" />
-    <meta property="og:title" content="Promofy — entre no grupo de ofertas" />
+    <meta property="og:url" content="https://apromofy.online/" />
+    <meta property="og:title" content="Promofy — Ofertas e Cupons no seu WhatsApp" />
     <meta
       property="og:description"
       content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam."
     />
-    <meta name="twitter:title" content="Promofy — entre no grupo de ofertas" />
+    <meta name="twitter:title" content="Promofy — Ofertas e Cupons no seu WhatsApp" />
     <meta
       name="twitter:description"
       content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam."
@@ -102,12 +108,12 @@ const AvisoEntrada = () => {
   );
 };
 
-const LandingSimples = () => {
+const LandingSimples = ({ duplicada }: PropsDePagina) => {
   useBodyClaro();
 
   return (
     <>
-      <LandingSimplesHead />
+      <LandingSimplesHead duplicada={duplicada} />
       <div className="min-h-[100dvh] w-full overflow-x-hidden bg-[#F8FAFC] bg-[radial-gradient(ellipse_90%_40%_at_50%_-6%,rgba(1,67,169,0.13),transparent_62%)] px-[15px] pb-24 pt-10 text-[#0F172A] sm:px-5 sm:pt-[50px]">
         <main className="mx-auto flex w-full max-w-[360px] flex-col items-center text-center sm:max-w-[480px]">
           <p className="mb-6 rounded-[30px] border border-[rgba(1,67,169,0.3)] bg-white px-5 py-1.5 text-[22px] font-black italic uppercase tracking-[-0.5px] text-[#0143A9] shadow-[0_4px_15px_rgba(0,0,0,0.05)]">

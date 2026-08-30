@@ -4,14 +4,14 @@ import promofyLogo from "@/assets/promofy-logo.webp";
 const PrivacyHead = () => (
   <Helmet>
     <title>Política de Privacidade — Promofy</title>
-    <meta name="description" content="Saiba como a Promofy coleta e utiliza dados de navegação, cookies e os pixels da Meta e da OpenAI, em conformidade com a LGPD (Lei 13.709/2018)." />
+    <meta name="description" content="Saiba como a Promofy coleta e utiliza dados de navegação, cookies e o pixel da Meta, em conformidade com a LGPD (Lei 13.709/2018)." />
     <link rel="canonical" href="https://apromofy.online/privacidade" />
     <meta property="og:title" content="Política de Privacidade — Promofy" />
-    <meta property="og:description" content="Como a Promofy trata seus dados de navegação, cookies e os pixels da Meta e da OpenAI, em conformidade com a LGPD." />
+    <meta property="og:description" content="Como a Promofy trata seus dados de navegação, cookies e o pixel da Meta, em conformidade com a LGPD." />
     <meta property="og:url" content="https://apromofy.online/privacidade" />
     <meta property="og:type" content="article" />
     <meta name="twitter:title" content="Política de Privacidade — Promofy" />
-    <meta name="twitter:description" content="Como a Promofy trata seus dados de navegação, cookies e os pixels da Meta e da OpenAI, em conformidade com a LGPD." />
+    <meta name="twitter:description" content="Como a Promofy trata seus dados de navegação, cookies e o pixel da Meta, em conformidade com a LGPD." />
   </Helmet>
 );
 
@@ -19,7 +19,7 @@ const PrivacyHead = () => (
 // `new Date()`, que renderizava sempre o dia de hoje do visitante — uma
 // política que se diz atualizada todo dia não marca versão nenhuma.
 // Mexeu no texto? Atualize esta data no mesmo commit.
-const ULTIMA_ATUALIZACAO = "24/08/2026";
+const ULTIMA_ATUALIZACAO = "28/08/2026";
 
 const sections = [
   {
@@ -79,38 +79,10 @@ const sections = [
     ),
   },
   {
-    title: "Pixel do OpenAI Ads",
-    content: (
-      <>
-        <p>
-          Utilizamos também o <strong className="text-foreground">Pixel do OpenAI Ads</strong>,
-          ferramenta da OpenAI, com a mesma finalidade: medir a eficácia das nossas campanhas
-          publicitárias. Ele registra o evento "lead_created" quando você clica no botão para
-          entrar no nosso grupo do WhatsApp, de forma agregada e sem identificar você
-          pessoalmente.
-        </p>
-        <p className="mt-2">
-          Os dois pixels convivem de forma independente: cada um mede apenas as próprias
-          campanhas e nenhum deles tem acesso aos dados do outro. Você pode consultar como a
-          OpenAI trata dados pessoais na{" "}
-          <a
-            href="https://openai.com/policies/privacy-policy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-foreground underline"
-          >
-            política de privacidade da OpenAI
-          </a>
-          .
-        </p>
-      </>
-    ),
-  },
-  {
     title: "Cookies",
     content: (
       <p>
-        Utilizamos cookies próprios e de terceiros (Meta e OpenAI) para fins de análise e remarketing.
+        Utilizamos cookies próprios e de terceiros (Meta) para fins de análise e remarketing.
         Você pode bloquear ou apagar cookies a qualquer momento nas configurações do seu
         navegador. A desativação pode afetar a sua experiência em outros sites, mas não
         impacta o funcionamento da Promofy.
@@ -141,7 +113,7 @@ const sections = [
     content: (
       <p>
         Não vendemos, alugamos ou cedemos dados a terceiros. As únicas integrações que
-        recebem dados técnicos são: Meta (Pixel), OpenAI (Pixel do OpenAI Ads) e o
+        recebem dados técnicos são: Meta (Pixel) e o
         provedor de hospedagem do site, todos dentro dos limites estritos descritos acima.
       </p>
     ),
