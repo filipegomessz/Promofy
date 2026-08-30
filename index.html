@@ -52,15 +52,8 @@
     <script type="module" src="/src/main.tsx"></script>
 
     <!-- PIXEL DA META. Regra: a fila existe desde o primeiro instante, o SDK
-         pesado chega depois. Comentário aqui é curto DE PROPÓSITO — o Vite não
-         minifica script inline, então tudo que se escreve neste bloco viaja em
-         cada página. O porquê inteiro está em src/lib/lead.ts, que é
-         compilado e onde comentário sai de graça.
-
-         O pixel do OpenAI Ads foi REMOVIDO em 28/08/2026, a pedido dele, ao
-         parar de anunciar por lá. Se um dia voltar, o histórico tem tudo
-         (branch `troca-paginas-sem-openai`) e o [[promofy-gotchas]] guarda as
-         armadilhas — principalmente o `oppref`. -->
+         pesado chega depois. Comentário curto DE PROPÓSITO: o Vite não minifica
+         script inline, então isto viaja em toda página. Detalhes em lead.ts. -->
     <script>
       (function () {
         var estado = (window.__promofyPixels = { meta: false });
