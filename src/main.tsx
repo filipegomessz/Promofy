@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
-import { chaveDaRota, normalizar, type ChaveDeRota, type PropsDePagina } from "./rotas.ts";
+import { chaveDaRota, normalizar, type ChaveDeRota } from "./rotas.ts";
 import "./index.css";
 
 /**
@@ -19,13 +19,9 @@ import "./index.css";
  * volta. Quem evita isso é o `scripts/prerender.mjs`, que escreve no HTML de
  * cada rota o `modulepreload` do pedaço daquela rota — assim os dois descem
  * em paralelo. Mexeu aqui? Conferir se o prerender ainda acha o pedaço certo.
- *
- * As duas rotas de captação apontam para o MESMO módulo de propósito: o
- * Rollup gera um pedaço só e `/` e `/lp` compartilham cache.
  */
-const CARREGAR: Record<ChaveDeRota, () => Promise<{ default: ComponentType<PropsDePagina> }>> = {
+const CARREGAR: Record<ChaveDeRota, () => Promise<{ default: ComponentType }>> = {
   captacao: () => import("./pages/LandingSimples.tsx"),
-  captacaoLp: () => import("./pages/LandingSimples.tsx"),
   completa: () => import("./pages/Index.tsx"),
   termos: () => import("./pages/Terms.tsx"),
   privacidade: () => import("./pages/Privacy.tsx"),
@@ -39,7 +35,7 @@ const chave = chaveDaRota(window.location.pathname);
 CARREGAR[chave]().then(({ default: Pagina }) => {
   const arvore = (
     <HelmetProvider>
-      <Pagina duplicada={chave === "captacaoLp"} />
+      <Pagina />
     </HelmetProvider>
   );
 

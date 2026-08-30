@@ -2,14 +2,17 @@
  * Fonte única dos caminhos do site.
  *
  * ⚠️ EM 28/08/2026 AS DUAS PÁGINAS TROCARAM DE LUGAR, a pedido dele. Antes a
- * raiz era a página completa e a captação morava em `/lp`. Agora é o inverso:
+ * raiz era a página completa e a captação morava em `/lp`. Agora:
  *
- *   `/`         → captação (LandingSimples). É a PRINCIPAL.
- *   `/lp`       → a MESMA captação. O endereço antigo continua vivo de
- *                 propósito, para não quebrar anúncio que já esteja no ar
- *                 apontando para lá. Leva `noindex` + canonical para `/`,
- *                 porque é conteúdo duplicado.
+ *   `/`         → captação (LandingSimples). É a PRINCIPAL e a única indexável.
  *   `/ofertas`  → página completa (Index), a que era a home. Leva `noindex`.
+ *
+ * 🗑️ **A rota `/lp` foi REMOVIDA em 30/08/2026.** Por dois dias ela serviu a
+ * mesma captação da raiz, para não quebrar anúncio que já estivesse no ar. Ele
+ * mandou tirar: "se /lp é a mesma coisa que a principal, não tem pq existir".
+ * Hoje `/lp` responde **404**. Se aparecer clique pago perdido vindo de lá, o
+ * conserto é ressuscitar a rota, não inventar redirecionamento — o GitHub
+ * Pages não faz redirecionamento configurável.
  *
  * A regra que ele deu para a página secundária: **não pode pesar nem
  * atrapalhar a principal de nenhuma forma.** Isso tem duas consequências, e
@@ -28,19 +31,19 @@
  * `renderToString` não espera um componente suspenso — ele renderizaria vazio.
  * Por isso a TABELA mora aqui e cada lado traz o seu próprio mapa.
  *
- * Para acrescentar ou religar uma rota são QUATRO lugares — e o tipo
+ * Para acrescentar ou religar uma rota são CINCO lugares — e o tipo
  * `ChaveDeRota` obriga: esquecer um dos mapas quebra o `tsc`, não o site.
  *   1. a chave em CHAVES_DE_ROTA;
  *   2. o `case` em chaveDaRota;
  *   3. a linha em ARQUIVO_DA_ROTA;
- *   4. a entrada em PAGINAS, nos DOIS mapas (main.tsx e entry-server.tsx).
+ *   4. a entrada em PAGINAS (entry-server.tsx) e em CARREGAR (main.tsx);
+ *   5. a linha em MODULO_DA_ROTA (scripts/prerender.mjs).
  *
  * Um caminho sem arquivo responde 404 de verdade, que é o sinal correto para
  * buscadores tratarem uma página como removida.
  */
 export const CHAVES_DE_ROTA = [
   "captacao",
-  "captacaoLp",
   "completa",
   "termos",
   "privacidade",
@@ -50,14 +53,6 @@ export const CHAVES_DE_ROTA = [
 
 export type ChaveDeRota = (typeof CHAVES_DE_ROTA)[number];
 
-/**
- * `duplicada` diz à captação que ela está sendo servida no endereço antigo
- * (`/lp`) e não na raiz. O único efeito é no `<head>`: ali ela leva `noindex`
- * e canonical apontando para `/`, porque é o mesmo conteúdo em dois endereços
- * e sem isso os dois disputariam a mesma posição no Google.
- */
-export type PropsDePagina = { duplicada?: boolean };
-
 /** Ignora barra final, querystring e âncora. A raiz vira "". */
 export const normalizar = (caminho: string) =>
   caminho.split("?")[0].split("#")[0].replace(/\/+$/, "");
@@ -66,8 +61,6 @@ export const chaveDaRota = (caminho: string): ChaveDeRota => {
   switch (normalizar(caminho)) {
     case "":
       return "captacao";
-    case "/lp":
-      return "captacaoLp";
     case "/ofertas":
       return "completa";
     case "/termos":
@@ -86,21 +79,19 @@ export const chaveDaRota = (caminho: string): ChaveDeRota => {
  * Servir um arquivo por rota, em vez de depender do fallback 404.html, é o que
  * faz cada página responder HTTP 200 no GitHub Pages.
  *
- * SOBRE O `alias` — medido no ar em 24/08/2026: uma rota servida por
+ * SOBRE O `alias`, que hoje ninguém usa: uma rota servida por
  * `pasta/index.html` faz o GitHub Pages responder **301 para a versão com
- * barra no fim** (`/lp` → `/lp/`). Numa página de anúncio isso é uma ida e
- * volta desperdiçada em cada clique pago, antes de a página começar a
- * carregar. Gravando TAMBÉM um `lp.html` na raiz, as duas grafias respondem
- * 200 direto e não importa qual delas acabe colada no gerenciador de
- * anúncios. Só a `/lp` precisa disso: a raiz nunca redireciona, e nas demais
- * o redirecionamento não custa nada porque ninguém chega nelas por link pago.
+ * barra no fim** (`/x` → `/x/`). Numa página de anúncio isso seria uma ida e
+ * volta desperdiçada em cada clique pago; gravar TAMBÉM um `<nome>.html` na
+ * raiz do dist resolve. A principal é a raiz, que nunca redireciona, e nas
+ * demais o redirecionamento não custa nada porque ninguém chega nelas por
+ * link pago. O campo fica aqui para quando voltar a fazer falta.
  */
 export const ARQUIVO_DA_ROTA: Record<
   ChaveDeRota,
   { caminho: string; arquivo: string; alias?: string }
 > = {
   captacao: { caminho: "/", arquivo: "index.html" },
-  captacaoLp: { caminho: "/lp", arquivo: "lp/index.html", alias: "lp.html" },
   completa: { caminho: "/ofertas", arquivo: "ofertas/index.html" },
   termos: { caminho: "/termos", arquivo: "termos/index.html" },
   privacidade: { caminho: "/privacidade", arquivo: "privacidade/index.html" },
@@ -119,5 +110,4 @@ export const ARQUIVO_DA_ROTA: Record<
  */
 export const CLASSE_DO_BODY: Partial<Record<ChaveDeRota, string>> = {
   captacao: "lp-clara",
-  captacaoLp: "lp-clara",
 };

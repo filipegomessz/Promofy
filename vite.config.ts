@@ -15,6 +15,30 @@ export default defineConfig(({ isSsrBuild }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // No NAVEGADOR o react-helmet-async vira um dublê que não faz nada: o
+      // <head> de cada rota já vem escrito no HTML pelo prerender, e sem
+      // navegação client-side ele nunca muda. Economiza 6,1 kB comprimidos em
+      // toda visita. Na compilação SSR o Helmet de verdade continua entrando —
+      // é ele que produz aquele head. Ver src/lib/helmet-vazio.tsx.
+      ...(isSsrBuild
+        ? {}
+        : {
+            "react-helmet-async": path.resolve(__dirname, "./src/lib/helmet-vazio.tsx"),
+            // PREACT NO NAVEGADOR (30/08/2026). O react + react-dom custavam
+            // 45,5 kB comprimidos em toda visita — mais do que TODO o resto do
+            // JavaScript da página principal somado. O preact/compat faz o
+            // mesmo em ~12 kB, com a mesma API. A pré-renderização continua
+            // usando o React de verdade: ela roda no build e não paga nada.
+            //
+            // ⚠️ O que isso obriga: nada de <Suspense> no entry-server (os
+            // marcadores <!--$--> confundiriam a hidratação do Preact) e
+            // conferir a `/ofertas` no navegador ao mexer, porque é a única
+            // página com Radix, que é o componente mais exigente do projeto.
+            react: "preact/compat",
+            "react-dom": "preact/compat",
+            "react-dom/client": "preact/compat/client",
+            "react/jsx-runtime": "preact/jsx-runtime",
+          }),
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
   },
@@ -35,8 +59,11 @@ export default defineConfig(({ isSsrBuild }) => ({
         manualChunks: isSsrBuild
           ? undefined
           : {
+              // Os nomes são os mesmos de sempre, mas com o alias acima eles
+              // resolvem para o `preact/compat`. Manter o pedaço separado vale
+              // pelo cache: é a única parte que não muda quando o site muda.
               // "react-dom/client" precisa estar listado: é ele que o main.tsx
-              // importa, e sem isso o react-dom inteiro caía no chunk errado
+              // importa, e sem isso o runtime inteiro caía no chunk errado
               // enquanto o "react-vendor" saía com 0,06 kB.
               "react-vendor": ["react", "react-dom", "react-dom/client", "react/jsx-runtime"],
               // NÃO juntar o lucide-react num pedaço só. Já foi assim, e o
