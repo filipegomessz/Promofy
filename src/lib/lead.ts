@@ -73,6 +73,15 @@ declare global {
 // não estava claro se o link novo valia para o site inteiro ou só para a
 // landing. Vale para tudo, então voltou a ser uma constante só.
 export const WHATSAPP_GROUP = "https://chat.whatsapp.com/ByF67GiEh9k3gq2XfoyUBs";
+
+/**
+ * Grupo do nicho de casa e construção, mandado por ele em 03/09/2026 — é um
+ * grupo DIFERENTE do geral, e é essa separação que dá sentido à página própria.
+ * Por algumas horas esta constante apontou para o WHATSAPP_GROUP enquanto o
+ * grupo não existia; não voltar a fazer isso, porque despejaria o público de
+ * obra no grupo geral sem ninguém perceber.
+ */
+export const WHATSAPP_GROUP_CONSTRUCAO = "https://chat.whatsapp.com/CtzBP0DO22h3xYCtyopQTj";
 export const WHATSAPP_CHANNEL =
   "https://whatsapp.com/channel/0029Vb7qoOCFXUuQyXWHEV0U";
 

@@ -19,7 +19,14 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { render, ARQUIVO_DA_ROTA, CLASSE_DO_BODY } from "../dist-ssr/entry-server.js";
+import {
+  render,
+  ARQUIVO_DA_ROTA,
+  CLASSE_DO_BODY,
+  PIXEL_DA_ROTA,
+  PIXEL_PRINCIPAL,
+} from "../dist-ssr/entry-server.js";
+import { aplicarPixel } from "./pixel.mjs";
 
 /**
  * Qual módulo de página cada rota carrega no navegador. Precisa bater com o
@@ -28,6 +35,7 @@ import { render, ARQUIVO_DA_ROTA, CLASSE_DO_BODY } from "../dist-ssr/entry-serve
  */
 const MODULO_DA_ROTA = {
   captacao: "src/pages/LandingSimples.tsx",
+  construcao: "src/pages/Construcao.tsx",
   completa: "src/pages/Index.tsx",
   termos: "src/pages/Terms.tsx",
   privacidade: "src/pages/Privacy.tsx",
@@ -131,12 +139,33 @@ if (!template.includes(MARCADOR_PRELOAD)) {
 }
 
 /**
- * O avatar é o elemento de LCP da captação e só dela. Pré-carregar em TODAS as
- * rotas seriam 11 kB em prioridade alta desperdiçados nas outras — item que o
- * próprio Lighthouse aponta. Por isso ele entra aqui, por rota.
+ * O avatar é o elemento de LCP das páginas de captação, e só delas.
+ * Pré-carregar em TODAS as rotas seriam 5 kB em prioridade alta desperdiçados
+ * nas outras — item que o próprio Lighthouse aponta. Por isso ele entra aqui,
+ * por rota.
+ *
+ * ⚠️ ATÉ 03/09/2026 ISTO PEGAVA CARONA NO CLASSE_DO_BODY: "tem classe no body"
+ * valia como "usa o avatar" porque, com uma captação só, as duas coisas
+ * coincidiam. Com a /construcao — que também é clara E também usa avatar — a
+ * carona continuaria certa por acidente, e a próxima página clara SEM avatar
+ * ganharia um preload que ninguém usa, sem quebrar nada e sem ninguém perceber.
+ *
+ * ⚠️ E CADA PÁGINA TEM A SUA IMAGEM, não a mesma. Isto nasceu como um `Set` de
+ * rotas com o arquivo cravado numa constante; quando a /construcao ganhou arte
+ * própria, aquele desenho teria pré-carregado a foto da OUTRA página — 5 kB
+ * baixados em prioridade alta e jamais usados, e o LCP de verdade sem preload
+ * nenhum. Falha silenciosa perfeita: nada quebra, a página só fica mais lenta.
+ * Por isso é mapa de rota → arquivo, e não lista de rotas.
  */
-const PRELOAD_AVATAR =
-  '<link rel="preload" as="image" href="/promofy-avatar.webp" fetchpriority="high">';
+const AVATAR_DA_ROTA = {
+  captacao: "/promofy-avatar.webp",
+  construcao: "/construcao-avatar.webp",
+};
+
+const preloadDoAvatar = (chave) =>
+  AVATAR_DA_ROTA[chave]
+    ? '<link rel="preload" as="image" href="' + AVATAR_DA_ROTA[chave] + '" fetchpriority="high">'
+    : "";
 
 let gravados = 0;
 for (const [chave, { caminho, arquivo, alias }] of Object.entries(ARQUIVO_DA_ROTA)) {
@@ -161,9 +190,17 @@ for (const [chave, { caminho, arquivo, alias }] of Object.entries(ARQUIVO_DA_ROT
 
   // data-rota diz ao main.tsx que este HTML corresponde à URL atual e que dá
   // para hidratar em vez de renderizar do zero.
-  const base = embutirCss(limparHead(template)).replace(
+  // O pixel é POR ROTA desde 03/09/2026: cada página leva o seu, ou nenhum.
+  // Ver PIXEL_DA_ROTA em src/rotas.ts e a explicação em scripts/pixel.mjs.
+  const comPixel = aplicarPixel(template, {
+    id: PIXEL_DA_ROTA[chave],
+    principal: PIXEL_PRINCIPAL,
+    rota: chave,
+  });
+
+  const base = embutirCss(limparHead(comPixel)).replace(
     MARCADOR_PRELOAD,
-    `${classeDoBody ? PRELOAD_AVATAR + "\n    " : ""}${MARCADOR_PRELOAD}`,
+    `${preloadDoAvatar(chave) ? preloadDoAvatar(chave) + "\n    " : ""}${MARCADOR_PRELOAD}`,
   );
 
   const html = base
@@ -177,7 +214,10 @@ for (const [chave, { caminho, arquivo, alias }] of Object.entries(ARQUIVO_DA_ROT
     writeFileSync(destino, html, "utf8");
     gravados += 1;
     const nota = nome === alias ? "  (alias, evita o 301 do Pages)" : "";
-    console.log(`prerender: ${nome.padEnd(24)} ${(corpo.length / 1024).toFixed(1)} kB de HTML${nota}`);
+    const pixel = PIXEL_DA_ROTA[chave] ? `pixel ${PIXEL_DA_ROTA[chave]}` : "SEM PIXEL";
+    console.log(
+      `prerender: ${nome.padEnd(24)} ${(corpo.length / 1024).toFixed(1).padStart(5)} kB  ${pixel.padEnd(22)}${nota}`,
+    );
   }
 }
 

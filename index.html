@@ -18,8 +18,10 @@
     <link rel="canonical" data-rh="true" href="https://apromofy.online/" />
     <meta name="twitter:card" content="summary_large_image" />
 
+    <!-- INICIO DICAS DO PIXEL -->
     <link rel="dns-prefetch" href="https://connect.facebook.net" />
     <link rel="dns-prefetch" href="https://www.facebook.com" />
+    <!-- FIM DICAS DO PIXEL -->
 
     <!-- MARCADOR: PRELOAD DA CAPTACAO
          O preload do avatar (elemento de LCP da captação) NÃO fica aqui: este
@@ -51,9 +53,15 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 
+    <!-- INICIO DO PIXEL -->
     <!-- PIXEL DA META. Regra: a fila existe desde o primeiro instante, o SDK
          pesado chega depois. Comentário curto DE PROPÓSITO: o Vite não minifica
-         script inline, então isto viaja em toda página. Detalhes em lead.ts. -->
+         script inline, então isto viaja em toda página. Detalhes em lead.ts.
+
+         ⚠️ O id aqui é o PRINCIPAL, e é o que roda em `npm run dev`. No build
+         cada rota recebe o seu: o scripts/prerender.mjs troca este número pelo
+         da rota (PIXEL_DA_ROTA em src/rotas.ts) ou apaga o bloco inteiro, se
+         aquela página não tiver pixel. Não é mais "o pixel do site". -->
     <script>
       (function () {
         var estado = (window.__promofyPixels = { meta: false });
@@ -88,5 +96,6 @@
     </script>
     <noscript><img height="1" width="1" style="display:none"
       src="https://www.facebook.com/tr?id=1561896425355572&ev=PageView&noscript=1" alt="" /></noscript>
+    <!-- FIM DO PIXEL -->
   </body>
 </html>

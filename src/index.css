@@ -194,6 +194,16 @@ body.lp-clara {
   background-image: none;
 }
 
+/* Captação de casa e construção (/construcao), 03/09/2026. Areia em vez do
+   cinza-azulado da outra: a paleta inteira foi escolhida por ele num mockup
+   interativo. O par deste valor está em Construcao.tsx (FUNDO) — os dois
+   precisam bater, senão a faixa fora do container aparece de outra cor no
+   celular quando a rolagem passa do fim. */
+body.construcao-clara {
+  background-color: #faf7f2;
+  background-image: none;
+}
+
 @keyframes lp-cta-pulse {
   0% { transform: scale(1); }
   30% { transform: scale(1.035); }
@@ -209,6 +219,9 @@ body.lp-clara {
 }
 
 .lp-cta { animation: lp-cta-pulse 2s ease-in-out infinite; }
+/* A /construcao reaproveita as duas animações da captação em vez de ganhar as
+   suas: são as mesmas curvas, e um segundo par só faria o CSS embutido crescer
+   em TODA página — ele viaja dentro do HTML de cada rota. */
 .lp-aviso { animation: lp-aviso-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) both; }
 
 @media (prefers-reduced-motion: reduce) {
