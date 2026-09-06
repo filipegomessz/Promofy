@@ -23,6 +23,7 @@ import "./index.css";
 const CARREGAR: Record<ChaveDeRota, () => Promise<{ default: ComponentType }>> = {
   captacao: () => import("./pages/LandingSimples.tsx"),
   construcao: () => import("./pages/Construcao.tsx"),
+  obras: () => import("./pages/Obras.tsx"),
   completa: () => import("./pages/Index.tsx"),
   termos: () => import("./pages/Terms.tsx"),
   privacidade: () => import("./pages/Privacy.tsx"),

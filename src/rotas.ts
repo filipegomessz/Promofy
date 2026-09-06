@@ -13,6 +13,15 @@
  * contrário da `/ofertas`, fala de outro assunto e não disputa posição com a
  * raiz. Ver PIXEL_DA_ROTA lá embaixo para o porquê de um pixel por página.
  *
+ * ➕ EM 06/09/2026 ENTROU A QUARTA, `/obras` (src/pages/Obras.tsx): a MESMA
+ * página da `/construcao`, pixel por pixel de tela, para o mesmo grupo de
+ * WhatsApp. O que muda é só quem mede: a `/obras` não tem pixel da Meta e tem
+ * o do OpenAI Ads (PIXEL_OPENAI_DA_ROTA). Existe porque ele quis anunciar o
+ * mesmo nicho nas duas plataformas sem misturar os painéis — e, como um
+ * documento só pode ter um `init` de cada, isso é uma página por plataforma.
+ * ⚠️ Ela leva `noindex` justamente por ser cópia: duas páginas iguais e
+ * indexáveis disputariam a mesma busca, e é a `/construcao` que fica com ela.
+ *
  * 🗑️ **A rota `/lp` foi REMOVIDA em 30/08/2026.** Por dois dias ela serviu a
  * mesma captação da raiz, para não quebrar anúncio que já estivesse no ar. Ele
  * mandou tirar: "se /lp é a mesma coisa que a principal, não tem pq existir".
@@ -37,17 +46,18 @@
  * `renderToString` não espera um componente suspenso — ele renderizaria vazio.
  * Por isso a TABELA mora aqui e cada lado traz o seu próprio mapa.
  *
- * Para acrescentar ou religar uma rota são SEIS lugares — e o tipo
+ * Para acrescentar ou religar uma rota são SETE lugares — e o tipo
  * `ChaveDeRota` obriga: esquecer um dos mapas quebra o `tsc`, não o site.
  *   1. a chave em CHAVES_DE_ROTA;
  *   2. o `case` em chaveDaRota;
  *   3. a linha em ARQUIVO_DA_ROTA;
  *   4. a linha em PIXEL_DA_ROTA — decidir explicitamente, inclusive `null`;
- *   5. a entrada em PAGINAS (entry-server.tsx) e em CARREGAR (main.tsx);
- *   6. a linha em MODULO_DA_ROTA (scripts/prerender.mjs).
+ *   5. a linha em PIXEL_OPENAI_DA_ROTA — idem, e quase sempre `null`;
+ *   6. a entrada em PAGINAS (entry-server.tsx) e em CARREGAR (main.tsx);
+ *   7. a linha em MODULO_DA_ROTA (scripts/prerender.mjs).
  *
- * O sétimo lugar NÃO é obrigatório e não quebra o `tsc`: se a página usar o
- * avatar, ela precisa entrar em ROTAS_COM_AVATAR (scripts/prerender.mjs), ou
+ * O oitavo lugar NÃO é obrigatório e não quebra o `tsc`: se a página usar o
+ * avatar, ela precisa entrar em AVATAR_DA_ROTA (scripts/prerender.mjs), ou
  * o pré-carregamento da imagem de LCP não é escrito e o LCP piora em silêncio.
  *
  * Um caminho sem arquivo responde 404 de verdade, que é o sinal correto para
@@ -64,6 +74,7 @@ export const PIXEL_PRINCIPAL = "1561896425355572";
 export const CHAVES_DE_ROTA = [
   "captacao",
   "construcao",
+  "obras",
   "completa",
   "termos",
   "privacidade",
@@ -83,6 +94,8 @@ export const chaveDaRota = (caminho: string): ChaveDeRota => {
       return "captacao";
     case "/construcao":
       return "construcao";
+    case "/obras":
+      return "obras";
     case "/ofertas":
       return "completa";
     case "/termos":
@@ -125,6 +138,14 @@ export const ARQUIVO_DA_ROTA: Record<
     // comentário grande logo acima.
     alias: "construcao.html",
   },
+  obras: {
+    caminho: "/obras",
+    arquivo: "obras/index.html",
+    // Mesma razão da /construcao: é página de ANÚNCIO, todo visitante chega
+    // por clique pago, e sem este arquivo na raiz do dist o GitHub Pages
+    // responde 301 de `/obras` para `/obras/` antes do primeiro byte.
+    alias: "obras.html",
+  },
   completa: { caminho: "/ofertas", arquivo: "ofertas/index.html" },
   termos: { caminho: "/termos", arquivo: "termos/index.html" },
   privacidade: { caminho: "/privacidade", arquivo: "privacidade/index.html" },
@@ -144,6 +165,10 @@ export const ARQUIVO_DA_ROTA: Record<
 export const CLASSE_DO_BODY: Partial<Record<ChaveDeRota, string>> = {
   captacao: "lp-clara",
   construcao: "construcao-clara",
+  // A /obras é a mesma tela da /construcao e reusa a MESMA classe de propósito:
+  // são duas rotas de um desenho só. Uma classe nova seria uma regra de CSS a
+  // mais em toda página (a folha vai embutida em todas) para pintar a mesma cor.
+  obras: "construcao-clara",
 };
 
 /**
@@ -164,10 +189,12 @@ export const CLASSE_DO_BODY: Partial<Record<ChaveDeRota, string>> = {
  * campanhas contariam a conversão uma da outra e nenhum dos números prestaria.
  * Por isso a tabela é `string | null`, e não uma lista.
  *
- * `null` significa PÁGINA SEM PIXEL NENHUM: o bloco inteiro sai do HTML
- * daquela rota, com o `<noscript>` e as dicas de DNS junto. É o estado em que
- * a `/construcao` nasce — o pixel dela ainda não existe (03/09/2026). Melhor
- * no ar sem medir do que mandando `PageView` para o pixel errado.
+ * `null` significa PÁGINA SEM PIXEL DA META NENHUM: o bloco inteiro sai do
+ * HTML daquela rota, com o `<noscript>` e as dicas de DNS junto. Foi o estado
+ * em que a `/construcao` nasceu, nas horas entre a página existir e ele criar
+ * o pixel dela — melhor no ar sem medir do que mandando `PageView` para o
+ * pixel errado. Hoje quem está assim é a `/obras`, e ali é permanente: ela
+ * mede na OpenAI, e a Meta não tem nada a ver com aquela campanha.
  *
  * Decisão dele em 03/09: as demais rotas continuam TODAS no pixel principal.
  * A campanha estava no ar e ele ainda apurava Eventos × Resultados; mexer no
@@ -181,9 +208,46 @@ export const PIXEL_DA_ROTA: Record<ChaveDeRota, string | null> = {
   // Nasceu sem histórico nenhum; a campanha de construção começa a fase de
   // aprendizado do zero, e isso é o preço, aceito, de separar os públicos.
   construcao: "1577370160750579",
+  // ⚠️ SEM PIXEL DA META, e isto é o pedido dele, não descuido: a /obras é a
+  // mesma página da /construcao servindo à campanha da OpenAI. Se um dia
+  // ganhar um id aqui, as duas campanhas passam a contar a conversão uma da
+  // outra — que é exatamente o que ter duas páginas evita.
+  obras: null,
   completa: PIXEL_PRINCIPAL,
   termos: PIXEL_PRINCIPAL,
   privacidade: PIXEL_PRINCIPAL,
   contato: PIXEL_PRINCIPAL,
   404: PIXEL_PRINCIPAL,
+};
+
+/**
+ * QUAL PIXEL DO OPENAI ADS CADA ROTA CARREGA — hoje, uma só.
+ *
+ * O pixel da OpenAI já morou neste site: entrou em 24/08/2026 e saiu em
+ * 28/08/2026, quando ele parou de anunciar por lá. Voltou em 06/09/2026 com um
+ * id NOVO e um desenho diferente: em vez de cair em toda página, como antes,
+ * mede uma rota só.
+ *
+ * A tabela é irmã da PIXEL_DA_ROTA e vale a mesma regra — um `init` por
+ * documento, nunca dois — mas o mecanismo é o oposto, e de propósito. O bloco
+ * da Meta mora no `index.html` e é REMOVIDO de quem não quer; o da OpenAI mora
+ * fora do template (scripts/pixel-openai.mjs) e é ACRESCENTADO em quem quer.
+ * A razão é peso: o SDK deles tem ~79 kB e uma única rota o usa.
+ *
+ * ⚠️ NADA IMPEDE, tecnicamente, uma rota ter os dois pixels — são empresas
+ * diferentes e objetos globais diferentes (`fbq` e `oaiq`). O que impede é a
+ * decisão dele: a /construcao mede na Meta, a /obras mede na OpenAI, e é essa
+ * separação que faz os dois painéis dizerem a verdade sobre a própria campanha.
+ */
+export const PIXEL_OPENAI_DA_ROTA: Record<ChaveDeRota, string | null> = {
+  captacao: null,
+  construcao: null,
+  // Id mandado por ele em 06/09/2026. Nasce sem histórico: a campanha começa a
+  // fase de aprendizado do zero, mesmo preço, já aceito, que a /construcao pagou.
+  obras: "WX8CZzKftgxHLc75QLrWQu",
+  completa: null,
+  termos: null,
+  privacidade: null,
+  contato: null,
+  404: null,
 };

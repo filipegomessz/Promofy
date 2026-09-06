@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import Index from "./pages/Index.tsx";
 import LandingSimples from "./pages/LandingSimples.tsx";
 import Construcao from "./pages/Construcao.tsx";
+import Obras from "./pages/Obras.tsx";
 import Terms from "./pages/Terms.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import Contact from "./pages/Contact.tsx";
@@ -12,7 +13,13 @@ import { chaveDaRota, type ChaveDeRota } from "./rotas.ts";
 
 // Reexportado para o scripts/prerender.mjs consumir do mesmo bundle: com uma
 // entrada só, o Rollup embute rotas.ts aqui dentro e não emite arquivo separado.
-export { ARQUIVO_DA_ROTA, CLASSE_DO_BODY, PIXEL_DA_ROTA, PIXEL_PRINCIPAL } from "./rotas.ts";
+export {
+  ARQUIVO_DA_ROTA,
+  CLASSE_DO_BODY,
+  PIXEL_DA_ROTA,
+  PIXEL_OPENAI_DA_ROTA,
+  PIXEL_PRINCIPAL,
+} from "./rotas.ts";
 
 // Aqui as páginas entram de forma NORMAL, sem lazy: `renderToString` não espera
 // um componente suspenso — ele renderizaria o fallback (vazio) e a página sairia
@@ -27,6 +34,7 @@ export { ARQUIVO_DA_ROTA, CLASSE_DO_BODY, PIXEL_DA_ROTA, PIXEL_PRINCIPAL } from 
 const PAGINAS: Record<ChaveDeRota, ReactNode> = {
   captacao: <LandingSimples />,
   construcao: <Construcao />,
+  obras: <Obras />,
   completa: <Index />,
   termos: <Terms />,
   privacidade: <Privacy />,

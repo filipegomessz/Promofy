@@ -40,6 +40,21 @@
          sempre buscada em modo CORS, e sem ele o preload seria descartado e
          o arquivo baixado duas vezes. -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin-var.woff2" crossorigin />
+    <!-- MARCADOR: PIXEL DA OPENAI
+         ⚠️ COLADA na linha de cima de propósito. A âncora sai inteira nas
+         rotas sem pixel da OpenAI, com a indentação e a quebra de linha; se
+         houvesse uma linha em branco aqui, sobrariam DUAS no HTML de seis
+         rotas — um byte de sujeira em cada página, e um diff que mente ao
+         dizer que nada mudou nelas.
+         Uma rota só mede na OpenAI — a /obras (06/09/2026) — e o bloco dela
+         entra AQUI no build, vindo de scripts/pixel-openai.mjs. Quem decide é
+         PIXEL_OPENAI_DA_ROTA, em src/rotas.ts. Nas outras rotas esta âncora
+         some inteira, com a indentação e a quebra de linha, e o HTML sai byte
+         a byte igual ao de antes de a /obras existir.
+         O bloco não mora neste template de propósito: o SDK da OpenAI pesa
+         ~79 kB, e o que se escreve aqui cai em TODA página. Não apague esta
+         linha — o build falha alto sem ela, que é o certo: uma página de
+         anúncio no ar sem medir nada é pior do que um build quebrado. -->
 
     <meta property="og:title" data-rh="true" content="Promofy — Ofertas e Cupons no seu WhatsApp">
     <meta name="twitter:title" data-rh="true" content="Promofy — Ofertas e Cupons no seu WhatsApp">
