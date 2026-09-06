@@ -18,10 +18,23 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { createElement, type ComponentType } from "react";
+import { renderToString } from "react-dom/server";
+import { HelmetProvider, type HelmetServerState } from "react-helmet-async";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
+import Construcao from "../pages/Construcao.tsx";
+import Obras from "../pages/Obras.tsx";
+import { WHATSAPP_GROUP_CONSTRUCAO } from "../lib/lead.ts";
+import { WHATSAPP_GROUP_OBRAS } from "../lib/lead-openai.ts";
 import { aplicarPixel } from "../../scripts/pixel.mjs";
-import { PIXEL_PRINCIPAL, PIXEL_DA_ROTA, CHAVES_DE_ROTA } from "../rotas.ts";
+import { aplicarPixelOpenai } from "../../scripts/pixel-openai.mjs";
+import {
+  PIXEL_PRINCIPAL,
+  PIXEL_DA_ROTA,
+  PIXEL_OPENAI_DA_ROTA,
+  CHAVES_DE_ROTA,
+} from "../rotas.ts";
 
 const html = readFileSync(resolve(__dirname, "../../index.html"), "utf8");
 
@@ -87,12 +100,15 @@ describe("pixel da Meta: o stub existe antes do SDK", () => {
     expect(scriptsInline).toHaveLength(1);
     expect(scriptsInline[0]).toContain(PIXEL_PRINCIPAL); // pixel da Meta
 
-    // O pixel da OpenAI foi removido em 28/08/2026. Isto impede que ele volte
-    // sem querer, num merge ou num copiar-colar de versão antiga.
+    // O PIXEL DA OPENAI NÃO PODE MORAR NESTE ARQUIVO — e desde 06/09/2026 esta
+    // é a razão viva do teste, não mais a de 28/08 (quando o pixel deles tinha
+    // simplesmente saído do site). Ele voltou, mas em UMA rota só, a /obras, e
+    // o SDK deles pesa ~79 kB: escrito aqui, cairia em toda página do site,
+    // porque este é o template de todas. O bloco mora em
+    // scripts/pixel-openai.mjs e é o prerender que o injeta onde deve.
     //
     // A asserção é sobre o CÓDIGO, não sobre o arquivo inteiro: o comentário
-    // do index.html cita a OpenAI de propósito, para quem for reintroduzir o
-    // pixel um dia saber onde estão as armadilhas.
+    // do index.html cita a OpenAI de propósito — é a âncora onde o bloco entra.
     expect(scriptsInline[0]).not.toContain("oaiq");
     expect(scriptsInline[0]).not.toContain("openai");
     expect(html).not.toContain("bzrcdn"); // o CDN do SDK, em qualquer forma
@@ -268,5 +284,217 @@ describe("um pixel por página", () => {
     expect(() => aplicarPixel(semMarca, { id: PIXEL_FALSO, principal: PIXEL_PRINCIPAL })).toThrow(
       /não achei a região/,
     );
+  });
+});
+
+/**
+ * ============================================================================
+ * O PIXEL DA OPENAI, EM UMA ROTA SÓ (06/09/2026)
+ * ============================================================================
+ *
+ * Ele quis anunciar o mesmo nicho de construção também na OpenAI, sem misturar
+ * os painéis. Como um documento não pode ter dois `init` da mesma plataforma —
+ * e como misturar Meta e OpenAI na mesma página faria cada campanha contar a
+ * conversão da outra —, isso virou uma página por plataforma: a /construcao
+ * mede na Meta, a /obras mede na OpenAI.
+ *
+ * O mecanismo é o INVERSO do da Meta, e é isso que estes testes guardam. O
+ * bloco da Meta mora no index.html e é removido de quem não quer; o da OpenAI
+ * mora fora do template e é acrescentado em quem quer, porque o SDK deles pesa
+ * ~79 kB e uma rota só o usa.
+ *
+ * O risco que justifica cada teste é o mesmo de sempre e não tem sintoma: uma
+ * página de anúncio sobe sem medir, ou medindo no lugar errado, e ninguém
+ * descobre até o painel estar vazio semanas depois.
+ */
+describe("pixel da OpenAI: entra numa rota só", () => {
+  /** O HTML como a /obras sai do build: sem o bloco da Meta, com o da OpenAI. */
+  const htmlObras = aplicarPixelOpenai(
+    aplicarPixel(html, { id: PIXEL_DA_ROTA.obras, principal: PIXEL_PRINCIPAL, rota: "obras" }),
+    { id: PIXEL_OPENAI_DA_ROTA.obras, rota: "obras" },
+  );
+
+  /** E como sai qualquer outra rota: sem vestígio nenhum da OpenAI. */
+  const htmlSemOpenai = aplicarPixelOpenai(html, { id: null, rota: "captacao" });
+
+  const scriptDaObras = () => {
+    const achados = [...htmlObras.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+    // Um só: o da Meta saiu junto com o pixel dela. Se este número mudar, os
+    // testes abaixo passam a rodar o trecho errado e param de guardar nada.
+    expect(achados).toHaveLength(1);
+    return achados[0];
+  };
+
+  const sdkDaOpenai = () =>
+    [...document.getElementsByTagName("script")].map((s) => s.src).filter((s) => s.includes("bzrcdn.openai.com"));
+
+  const rodar = () => {
+    // Mesmo motivo do teste da Meta: o trecho insere o SDK antes do primeiro
+    // script da página, e um documento de jsdom nasce sem nenhum.
+    document.head.appendChild(document.createElement("script"));
+    new Function(scriptDaObras())();
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    document.head.innerHTML = "";
+    document.body.innerHTML = "";
+    delete window.oaiq;
+    delete window.__promofyOpenai;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("só a /obras mede na OpenAI, e com o id que ele mandou", () => {
+    expect(PIXEL_OPENAI_DA_ROTA.obras).toBe("WX8CZzKftgxHLc75QLrWQu");
+
+    for (const chave of CHAVES_DE_ROTA) {
+      if (chave === "obras") continue;
+      // A asserção que importa. Uma rota qualquer ganhando pixel da OpenAI por
+      // descuido significa 79 kB de SDK e `page_view` de gente que não veio da
+      // campanha — o tipo de coisa que só aparece no painel, torto, depois.
+      expect(PIXEL_OPENAI_DA_ROTA[chave]).toBeNull();
+    }
+  });
+
+  it("a /obras NÃO tem pixel da Meta — é a razão de ela existir", () => {
+    expect(PIXEL_DA_ROTA.obras).toBeNull();
+
+    expect(htmlObras).not.toContain("fbq");
+    expect(htmlObras).not.toContain("connect.facebook.net");
+    expect(htmlObras).not.toContain("facebook.com/tr");
+    expect(htmlObras).not.toContain(PIXEL_PRINCIPAL);
+    expect(htmlObras).not.toContain(PIXEL_DA_ROTA.construcao!);
+  });
+
+  it("toda rota decidiu se mede na OpenAI — inclusive decidir que não", () => {
+    for (const chave of CHAVES_DE_ROTA) {
+      const id = PIXEL_OPENAI_DA_ROTA[chave];
+      expect(id === null || typeof id === "string").toBe(true);
+    }
+  });
+
+  it("cria oaiq NA HORA, com a fila, sem esperar nada", () => {
+    rodar();
+
+    // O mesmo teste que existe para a Meta, pelo mesmo defeito de 26/08/2026:
+    // stub criado dentro de função adiada é conversão descartada em silêncio
+    // para quem chega convencido e aperta o botão na hora.
+    expect(typeof window.oaiq).toBe("function");
+    expect((window.oaiq as unknown as { q: unknown[][] }).q).toBeInstanceOf(Array);
+  });
+
+  it("enfileira o init com o pixel certo", () => {
+    rodar();
+
+    const fila = (window.oaiq as unknown as { q: unknown[][] }).q;
+    expect(fila[0][0]).toBe("init");
+    expect((fila[0][1] as { pixelId: string }).pixelId).toBe("WX8CZzKftgxHLc75QLrWQu");
+  });
+
+  it("um clique adiantado entra na fila em vez de ser descartado", () => {
+    rodar();
+
+    // Exatamente o que o trackLeadObras faz, antes de o SDK ter chegado.
+    window.oaiq!("measure", "lead_created", { type: "customer_action" });
+
+    const fila = (window.oaiq as unknown as { q: unknown[][] }).q;
+    expect(fila[fila.length - 1][1]).toBe("lead_created");
+  });
+
+  it("BAIXA O SDK NA HORA — sem toque, sem ocioso, sem relógio", () => {
+    rodar();
+
+    // ⚠️ Este é o teste que protege a ATRIBUIÇÃO, e ele é o oposto do da Meta.
+    // O SDK só lê o `oppref` da URL quando carrega; adiá-lo faria a conversão
+    // ser aceita com HTTP 202 e ficar órfã, sem alimentar a campanha. Já
+    // aconteceu, em 28/08/2026, e custou dinheiro de anúncio.
+    expect(sdkDaOpenai()).toHaveLength(1);
+
+    const trecho = scriptDaObras();
+    expect(trecho).not.toContain("requestIdleCallback");
+    expect(trecho).not.toContain("pointerdown");
+  });
+
+  it("o debug depende do endereço, e não fica ligado no ar", () => {
+    // O trecho que a OpenAI entrega no painel vem com `debug: true` cravado.
+    // No ar isso é ruído no console de todo visitante; aqui ele liga sozinho
+    // só em localhost.
+    const trecho = scriptDaObras();
+    expect(trecho).toContain("location.hostname");
+    expect(trecho).not.toMatch(/debug:\s*true/);
+  });
+
+  it("nas outras rotas não sobra vestígio, nem sujeira no lugar da âncora", () => {
+    expect(htmlSemOpenai).not.toContain("oaiq");
+    expect(htmlSemOpenai).not.toContain("bzrcdn");
+    expect(htmlSemOpenai).not.toContain("bzr.openai.com");
+    expect(htmlSemOpenai).not.toContain("MARCADOR: PIXEL DA OPENAI");
+
+    // E o corte é limpo: mesma coisa que uma remoção feita à mão com regex.
+    // Isto é o que garante que o HTML das SEIS rotas antigas continue byte a
+    // byte igual ao de antes de a /obras existir — a promessa desta mudança.
+    const naMao = html.replace(/[ \t]*<!-- MARCADOR: PIXEL DA OPENAI[\s\S]*?-->\r?\n/, "");
+    expect(htmlSemOpenai).toBe(naMao);
+  });
+
+  it("explode se alguém apagar a âncora do index.html", () => {
+    const semAncora = html.replace("<!-- MARCADOR: PIXEL DA OPENAI", "<!-- outra coisa");
+    expect(() => aplicarPixelOpenai(semAncora, { id: "x", rota: "obras" })).toThrow(
+      /não achei a âncora/,
+    );
+  });
+});
+
+/**
+ * ============================================================================
+ * AS DUAS PÁGINAS SÃO A MESMA PÁGINA
+ * ============================================================================
+ *
+ * Ele pediu a /obras com "a aparência exatamente igual" à da /construcao. Como
+ * são dois arquivos (e são dois de propósito — importar um componente comum
+ * mudaria o grafo de pedaços da página que já está no ar), nada além deste
+ * teste impede que uma mude e a outra fique para trás.
+ *
+ * A comparação é do HTML RENDERIZADO, e não do texto dos arquivos: é o que a
+ * pessoa vê, e é insensível a comentário, nome de componente e ordem de import.
+ */
+describe("a /obras é a /construcao, pixel por pixel de tela", () => {
+  const renderizar = (Pagina: ComponentType) =>
+    renderToString(createElement(HelmetProvider, { context: {} }, createElement(Pagina)));
+
+  it("as duas rotas produzem exatamente o mesmo HTML", () => {
+    expect(renderizar(Obras)).toBe(renderizar(Construcao));
+  });
+
+  it("as duas mandam para o MESMO grupo de WhatsApp", () => {
+    // Se divergirem sem querer, metade do dinheiro de anúncio cai num grupo
+    // abandonado — e o botão continua funcionando, então nada mais avisa.
+    expect(WHATSAPP_GROUP_OBRAS).toBe(WHATSAPP_GROUP_CONSTRUCAO);
+  });
+
+  it("o head é o único ponto em que divergem, e é por causa do noindex", () => {
+    // ⚠️ `canUseDOM = false` é obrigatório aqui, e não é gambiarra: o vitest
+    // roda em jsdom, e com DOM à vista o react-helmet-async entra no modo
+    // NAVEGADOR — aplica as tags no document.head de verdade (e ainda por cima
+    // no quadro seguinte, porque `defer` é true) em vez de preencher o
+    // contexto de servidor. Sem esta linha o `contexto.helmet` volta vazio e o
+    // teste acusa um defeito que não existe. Já custou um diagnóstico errado
+    // neste projeto uma vez.
+    const provider = HelmetProvider as unknown as { canUseDOM: boolean };
+    const antes = provider.canUseDOM;
+    provider.canUseDOM = false;
+
+    try {
+      const contexto: { helmet?: HelmetServerState } = {};
+      renderToString(createElement(HelmetProvider, { context: contexto }, createElement(Obras)));
+
+      expect(contexto.helmet!.meta.toString()).toContain('content="noindex, follow"');
+      expect(contexto.helmet!.link.toString()).toContain("https://apromofy.online/obras");
+    } finally {
+      provider.canUseDOM = antes;
+    }
   });
 });

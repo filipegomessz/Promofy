@@ -24,9 +24,11 @@ import {
   ARQUIVO_DA_ROTA,
   CLASSE_DO_BODY,
   PIXEL_DA_ROTA,
+  PIXEL_OPENAI_DA_ROTA,
   PIXEL_PRINCIPAL,
 } from "../dist-ssr/entry-server.js";
 import { aplicarPixel } from "./pixel.mjs";
+import { aplicarPixelOpenai } from "./pixel-openai.mjs";
 
 /**
  * Qual módulo de página cada rota carrega no navegador. Precisa bater com o
@@ -36,6 +38,7 @@ import { aplicarPixel } from "./pixel.mjs";
 const MODULO_DA_ROTA = {
   captacao: "src/pages/LandingSimples.tsx",
   construcao: "src/pages/Construcao.tsx",
+  obras: "src/pages/Obras.tsx",
   completa: "src/pages/Index.tsx",
   termos: "src/pages/Terms.tsx",
   privacidade: "src/pages/Privacy.tsx",
@@ -160,6 +163,10 @@ if (!template.includes(MARCADOR_PRELOAD)) {
 const AVATAR_DA_ROTA = {
   captacao: "/promofy-avatar.webp",
   construcao: "/construcao-avatar.webp",
+  // A /obras é a mesma página da /construcao e usa a MESMA arte — de novo o
+  // motivo de isto ser um mapa e não uma lista: as duas rotas apontam para o
+  // mesmo arquivo, e a captação principal continua apontando para o dela.
+  obras: "/construcao-avatar.webp",
 };
 
 const preloadDoAvatar = (chave) =>
@@ -198,7 +205,17 @@ for (const [chave, { caminho, arquivo, alias }] of Object.entries(ARQUIVO_DA_ROT
     rota: chave,
   });
 
-  const base = embutirCss(limparHead(comPixel)).replace(
+  // E o da OpenAI, que desde 06/09/2026 existe numa rota só (a /obras) e por
+  // isso funciona ao contrário: em vez de sair de quem não quer, ele ENTRA em
+  // quem quer. Ver PIXEL_OPENAI_DA_ROTA em src/rotas.ts e o porquê inteiro em
+  // scripts/pixel-openai.mjs. Nas demais rotas esta linha só apaga a âncora, e
+  // o HTML sai idêntico ao de antes de a /obras existir.
+  const comOpenai = aplicarPixelOpenai(comPixel, {
+    id: PIXEL_OPENAI_DA_ROTA[chave],
+    rota: chave,
+  });
+
+  const base = embutirCss(limparHead(comOpenai)).replace(
     MARCADOR_PRELOAD,
     `${preloadDoAvatar(chave) ? preloadDoAvatar(chave) + "\n    " : ""}${MARCADOR_PRELOAD}`,
   );
@@ -214,9 +231,15 @@ for (const [chave, { caminho, arquivo, alias }] of Object.entries(ARQUIVO_DA_ROT
     writeFileSync(destino, html, "utf8");
     gravados += 1;
     const nota = nome === alias ? "  (alias, evita o 301 do Pages)" : "";
-    const pixel = PIXEL_DA_ROTA[chave] ? `pixel ${PIXEL_DA_ROTA[chave]}` : "SEM PIXEL";
+    // O log diz em voz alta quem mede o quê. É a última chance de alguém
+    // reparar que uma página de anúncio subiu sem pixel, ou com o do vizinho.
+    const pixel = PIXEL_DA_ROTA[chave]
+      ? `meta ${PIXEL_DA_ROTA[chave]}`
+      : PIXEL_OPENAI_DA_ROTA[chave]
+        ? `openai ${PIXEL_OPENAI_DA_ROTA[chave]}`
+        : "SEM PIXEL";
     console.log(
-      `prerender: ${nome.padEnd(24)} ${(corpo.length / 1024).toFixed(1).padStart(5)} kB  ${pixel.padEnd(22)}${nota}`,
+      `prerender: ${nome.padEnd(24)} ${(corpo.length / 1024).toFixed(1).padStart(5)} kB  ${pixel.padEnd(29)}${nota}`,
     );
   }
 }
