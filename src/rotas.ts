@@ -1,11 +1,23 @@
 /**
  * Fonte única dos caminhos do site.
  *
- * ⚠️ EM 28/08/2026 AS DUAS PÁGINAS TROCARAM DE LUGAR, a pedido dele. Antes a
- * raiz era a página completa e a captação morava em `/lp`. Agora:
+ * ⚠️ EM 08/09/2026 A RAIZ MUDOU DE DONO OUTRA VEZ, a pedido dele. Hoje:
  *
- *   `/`         → captação (LandingSimples). É a PRINCIPAL do público geral.
- *   `/ofertas`  → página completa (Index), a que era a home. Leva `noindex`.
+ *   `/`         → a lista dos grupos (Grupos.tsx). É a porta da frente, a
+ *                 única indexável que fala de ofertas, e **NÃO TEM PIXEL**:
+ *                 ninguém anuncia para cá, e ele quis assim.
+ *   `/geral`    → a captação do grupo geral (LandingSimples), que era a raiz.
+ *                 Continua com o pixel de sempre e virou página de anúncio,
+ *                 com `alias` para responder 200 direto e `noindex` para não
+ *                 disputar busca com a raiz, que fala do mesmo assunto.
+ *   `/ofertas`  → página completa (Index), a que já foi a home. Leva `noindex`.
+ *
+ * 🔴 CONSEQUÊNCIA QUE TEM DE VIAJAR COM ESTA MUDANÇA: anúncio apontando para
+ * `apromofy.online/` cai numa página que não mede nada. O destino de qualquer
+ * campanha do público geral precisa ser `apromofy.online/geral`.
+ *
+ * ℹ️ Antes disso, em 28/08/2026, as duas páginas já tinham trocado de lugar:
+ * a raiz era a página completa e a captação morava em `/lp`.
  *
  * ➕ EM 03/09/2026 ENTROU UMA TERCEIRA PORTA, `/construcao`
  * (src/pages/Construcao.tsx): captação do público de casa e construção, com
@@ -72,6 +84,7 @@
 export const PIXEL_PRINCIPAL = "1561896425355572";
 
 export const CHAVES_DE_ROTA = [
+  "grupos",
   "captacao",
   "construcao",
   "obras",
@@ -91,6 +104,8 @@ export const normalizar = (caminho: string) =>
 export const chaveDaRota = (caminho: string): ChaveDeRota => {
   switch (normalizar(caminho)) {
     case "":
+      return "grupos";
+    case "/geral":
       return "captacao";
     case "/construcao":
       return "construcao";
@@ -126,7 +141,16 @@ export const ARQUIVO_DA_ROTA: Record<
   ChaveDeRota,
   { caminho: string; arquivo: string; alias?: string }
 > = {
-  captacao: { caminho: "/", arquivo: "index.html" },
+  grupos: { caminho: "/", arquivo: "index.html" },
+  captacao: {
+    caminho: "/geral",
+    arquivo: "geral/index.html",
+    // Esta rota era a raiz, que nunca redireciona, e por isso nunca precisou de
+    // `alias`. Agora que mora numa pasta, precisa: é a página de anúncio do
+    // público geral, e sem o arquivo na raiz do dist o Pages responderia 301 de
+    // `/geral` para `/geral/` antes do primeiro byte de cada clique pago.
+    alias: "geral.html",
+  },
   construcao: {
     caminho: "/construcao",
     arquivo: "construcao/index.html",
@@ -163,6 +187,10 @@ export const ARQUIVO_DA_ROTA: Record<
  * primeira pintura sai certa. A regra `body.lp-clara` mora em `index.css`.
  */
 export const CLASSE_DO_BODY: Partial<Record<ChaveDeRota, string>> = {
+  // A lista de grupos usa o MESMO claro da captação (#F8FAFC) — é a mesma
+  // família visual, e uma classe nova só faria a folha embutida crescer em
+  // toda página para pintar a mesma cor.
+  grupos: "lp-clara",
   captacao: "lp-clara",
   construcao: "construcao-clara",
   // A /obras é a mesma tela da /construcao e reusa a MESMA classe de propósito:
@@ -201,6 +229,12 @@ export const CLASSE_DO_BODY: Partial<Record<ChaveDeRota, string>> = {
  * que já rodava seria risco sem ganho.
  */
 export const PIXEL_DA_ROTA: Record<ChaveDeRota, string | null> = {
+  // ⚠️ A PORTA DA FRENTE NÃO MEDE NADA, e é decisão dele (08/09/2026). Ninguém
+  // anuncia para a raiz: quem recebe clique pago é a /geral, a /construcao e a
+  // /obras, cada uma com o seu pixel. Se um dia entrar campanha apontando para
+  // cá, é aqui que se põe o id — e aí a página passa a precisar do trackLead
+  // também, que hoje ela não importa de propósito (ver Grupos.tsx).
+  grupos: null,
   captacao: PIXEL_PRINCIPAL,
   // Pixel do nicho de casa e construção, criado por ele em 03/09/2026 dentro do
   // PORTFÓLIO EMPRESARIAL — o antigo mora no perfil pessoal, e a diferença é
@@ -240,6 +274,7 @@ export const PIXEL_DA_ROTA: Record<ChaveDeRota, string | null> = {
  * separação que faz os dois painéis dizerem a verdade sobre a própria campanha.
  */
 export const PIXEL_OPENAI_DA_ROTA: Record<ChaveDeRota, string | null> = {
+  grupos: null,
   captacao: null,
   construcao: null,
   // Id mandado por ele em 06/09/2026. Nasce sem histórico: a campanha começa a

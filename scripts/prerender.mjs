@@ -36,6 +36,7 @@ import { aplicarPixelOpenai } from "./pixel-openai.mjs";
  * manifesto do Vite, o nome com hash do pedaço de cada rota.
  */
 const MODULO_DA_ROTA = {
+  grupos: "src/pages/Grupos.tsx",
   captacao: "src/pages/LandingSimples.tsx",
   construcao: "src/pages/Construcao.tsx",
   obras: "src/pages/Obras.tsx",
@@ -160,19 +161,25 @@ if (!template.includes(MARCADOR_PRELOAD)) {
  * nenhum. Falha silenciosa perfeita: nada quebra, a página só fica mais lenta.
  * Por isso é mapa de rota → arquivo, e não lista de rotas.
  */
+// ⚠️ EM 08/09/2026 O VALOR VIROU LISTA. A raiz deixou de ser uma captação com
+// uma foto e passou a ser a lista dos grupos, que mostra as DUAS artes acima da
+// dobra — pré-carregar só a primeira deixaria a segunda chegar tarde, e a
+// segunda é a maior (15,6 kB contra 5,0). Uma rota com uma imagem só continua
+// escrevendo uma linha; quem tem duas escreve duas.
 const AVATAR_DA_ROTA = {
-  captacao: "/promofy-avatar.webp",
-  construcao: "/construcao-avatar.webp",
+  grupos: ["/promofy-avatar.webp", "/construcao-avatar.webp"],
+  captacao: ["/promofy-avatar.webp"],
+  construcao: ["/construcao-avatar.webp"],
   // A /obras é a mesma página da /construcao e usa a MESMA arte — de novo o
-  // motivo de isto ser um mapa e não uma lista: as duas rotas apontam para o
-  // mesmo arquivo, e a captação principal continua apontando para o dela.
-  obras: "/construcao-avatar.webp",
+  // motivo de isto ser um mapa e não uma lista de rotas: as duas apontam para o
+  // mesmo arquivo, e cada uma das outras continua apontando para o dela.
+  obras: ["/construcao-avatar.webp"],
 };
 
 const preloadDoAvatar = (chave) =>
-  AVATAR_DA_ROTA[chave]
-    ? '<link rel="preload" as="image" href="' + AVATAR_DA_ROTA[chave] + '" fetchpriority="high">'
-    : "";
+  (AVATAR_DA_ROTA[chave] || [])
+    .map((arquivo) => '<link rel="preload" as="image" href="' + arquivo + '" fetchpriority="high">')
+    .join("\n    ");
 
 let gravados = 0;
 for (const [chave, { caminho, arquivo, alias }] of Object.entries(ARQUIVO_DA_ROTA)) {

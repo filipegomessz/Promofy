@@ -25,7 +25,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import Construcao from "../pages/Construcao.tsx";
 import Obras from "../pages/Obras.tsx";
-import { WHATSAPP_GROUP_CONSTRUCAO } from "../lib/lead.ts";
+import Grupos from "../pages/Grupos.tsx";
+import LandingSimples from "../pages/LandingSimples.tsx";
+import { WHATSAPP_GROUP, WHATSAPP_GROUP_CONSTRUCAO } from "../lib/lead.ts";
 import { WHATSAPP_GROUP_OBRAS } from "../lib/lead-openai.ts";
 import { aplicarPixel } from "../../scripts/pixel.mjs";
 import { aplicarPixelOpenai } from "../../scripts/pixel-openai.mjs";
@@ -34,6 +36,8 @@ import {
   PIXEL_DA_ROTA,
   PIXEL_OPENAI_DA_ROTA,
   CHAVES_DE_ROTA,
+  ARQUIVO_DA_ROTA,
+  chaveDaRota,
 } from "../rotas.ts";
 
 const html = readFileSync(resolve(__dirname, "../../index.html"), "utf8");
@@ -496,5 +500,124 @@ describe("a /obras é a /construcao, pixel por pixel de tela", () => {
     } finally {
       provider.canUseDOM = antes;
     }
+  });
+});
+
+/**
+ * ============================================================================
+ * A TROCA DA RAIZ (08/09/2026)
+ * ============================================================================
+ *
+ * A porta da frente virou a lista dos grupos, e a captação que morava lá se
+ * mudou para `/geral` levando o pixel dela. É a segunda vez que a raiz troca de
+ * dono neste projeto, e as duas vezes a parte perigosa foi a mesma: **um
+ * endereço de anúncio que passa a apontar para o lugar errado não dá erro
+ * nenhum** — a página abre, bonita, e simplesmente não mede.
+ *
+ * Por isso estes testes cravam as duas pontas: quem responde em cada endereço,
+ * e quem mede o quê.
+ */
+describe("a raiz agora é a lista de grupos", () => {
+  const renderizarComHead = (Pagina: ComponentType) => {
+    // Mesmo motivo explicado no teste do noindex da /obras: em jsdom o Helmet
+    // entra no modo navegador e não preenche o contexto de servidor.
+    const provider = HelmetProvider as unknown as { canUseDOM: boolean };
+    const antes = provider.canUseDOM;
+    provider.canUseDOM = false;
+    try {
+      const contexto: { helmet?: HelmetServerState } = {};
+      const corpo = renderToString(
+        createElement(HelmetProvider, { context: contexto }, createElement(Pagina)),
+      );
+      return { corpo, helmet: contexto.helmet! };
+    } finally {
+      provider.canUseDOM = antes;
+    }
+  };
+
+  it("a raiz responde pela lista de grupos, e a captação por /geral", () => {
+    expect(chaveDaRota("/")).toBe("grupos");
+    expect(chaveDaRota("")).toBe("grupos");
+    expect(chaveDaRota("/geral")).toBe("captacao");
+    // Com barra no fim e com querystring de campanha, que é como o clique pago
+    // costuma chegar.
+    expect(chaveDaRota("/geral/")).toBe("captacao");
+    expect(chaveDaRota("/geral?fbclid=abc")).toBe("captacao");
+  });
+
+  it("a /geral responde 200 direto, sem o 301 do Pages", () => {
+    // Ela virou página de ANÚNCIO: cada redirecionamento é uma ida e volta
+    // paga antes do primeiro byte. O alias é o que evita isso.
+    expect(ARQUIVO_DA_ROTA.captacao.caminho).toBe("/geral");
+    expect(ARQUIVO_DA_ROTA.captacao.alias).toBe("geral.html");
+    expect(ARQUIVO_DA_ROTA.grupos.arquivo).toBe("index.html");
+  });
+
+  it("A PORTA DA FRENTE NÃO MEDE NADA — nem Meta, nem OpenAI", () => {
+    // Pedido dele, e o teste existe porque o contrário é invisível: um id
+    // caindo aqui por descuido mandaria PageView de todo mundo que chega pelo
+    // orgânico para o pixel de uma campanha que não pagou por essa visita.
+    expect(PIXEL_DA_ROTA.grupos).toBeNull();
+    expect(PIXEL_OPENAI_DA_ROTA.grupos).toBeNull();
+
+    const saida = aplicarPixelOpenai(
+      aplicarPixel(html, { id: PIXEL_DA_ROTA.grupos, principal: PIXEL_PRINCIPAL, rota: "grupos" }),
+      { id: PIXEL_OPENAI_DA_ROTA.grupos, rota: "grupos" },
+    );
+    expect(saida).not.toContain("fbq");
+    expect(saida).not.toContain("oaiq");
+    expect(saida).not.toContain(PIXEL_PRINCIPAL);
+    expect(saida).not.toContain("dns-prefetch");
+  });
+
+  it("a captação levou o pixel dela para a /geral", () => {
+    // A mudança de endereço não pode ter custado a medição da campanha que
+    // estava no ar — o id tem de ser o mesmo de sempre.
+    expect(PIXEL_DA_ROTA.captacao).toBe(PIXEL_PRINCIPAL);
+  });
+
+  it("a raiz manda para os MESMOS grupos que as outras páginas", () => {
+    // Os links estão escritos dentro de Grupos.tsx para a raiz não arrastar o
+    // pedaço `lib/lead` inteiro. O preço disso é a duplicata, e é este teste
+    // que a segura: trocar o grupo num lugar e esquecer no outro mandaria
+    // gente para um grupo abandonado sem erro nenhum aparecer.
+    const { corpo } = renderizarComHead(Grupos);
+    expect(corpo).toContain(WHATSAPP_GROUP);
+    expect(corpo).toContain(WHATSAPP_GROUP_CONSTRUCAO);
+  });
+
+  it("o negrito com asterisco vira <strong>, e não texto com asterisco", () => {
+    const { corpo } = renderizarComHead(Grupos);
+    expect(corpo).toContain("<strong");
+    expect(corpo).toContain("CUPONS");
+    expect(corpo).toContain("PREÇOS BAIXOS");
+    // Se sobrar um asterisco na tela, a marcação não foi convertida.
+    expect(corpo).not.toContain("*");
+  });
+
+  it("o rodapé de confiança está na página", () => {
+    const { corpo } = renderizarComHead(Grupos);
+    expect(corpo).toContain("Mercado Livre");
+    expect(corpo).toContain("sem spam");
+  });
+
+  it("o head do index.html espelha o da raiz — a regra que já falhou antes", () => {
+    // O `index.html` é o que o GitHub Pages entrega, e é tudo o que um robô
+    // sem JavaScript e a prévia de link do WhatsApp enxergam. Quando a raiz
+    // troca de página e este arquivo fica para trás, o site inteiro passa a se
+    // anunciar com o título da página errada — sem nada quebrar.
+    const { helmet } = renderizarComHead(Grupos);
+    const titulo = helmet.title.toString().replace(/<[^>]+>/g, "").trim();
+
+    expect(titulo).toBe("Promofy — Grupos de ofertas e cupons no WhatsApp");
+    expect(html).toContain("<title>" + titulo + "</title>");
+    expect(html).toContain('content="' + titulo + '"'); // og:title e twitter:title
+    expect(html).toContain('href="https://apromofy.online/"');
+  });
+
+  it("a /geral saiu do índice para não disputar busca com a raiz", () => {
+    const { helmet } = renderizarComHead(LandingSimples);
+    expect(helmet.meta.toString()).toContain('content="noindex, follow"');
+    expect(helmet.link.toString()).toContain("https://apromofy.online/geral");
   });
 });

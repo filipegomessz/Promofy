@@ -21,6 +21,7 @@ import "./index.css";
  * em paralelo. Mexeu aqui? Conferir se o prerender ainda acha o pedaço certo.
  */
 const CARREGAR: Record<ChaveDeRota, () => Promise<{ default: ComponentType }>> = {
+  grupos: () => import("./pages/Grupos.tsx"),
   captacao: () => import("./pages/LandingSimples.tsx"),
   construcao: () => import("./pages/Construcao.tsx"),
   obras: () => import("./pages/Obras.tsx"),
