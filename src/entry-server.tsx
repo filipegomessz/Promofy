@@ -3,6 +3,7 @@ import { HelmetProvider, type HelmetServerState } from "react-helmet-async";
 import type { ReactNode } from "react";
 import Index from "./pages/Index.tsx";
 import LandingSimples from "./pages/LandingSimples.tsx";
+import Grupos from "./pages/Grupos.tsx";
 import Construcao from "./pages/Construcao.tsx";
 import Obras from "./pages/Obras.tsx";
 import Terms from "./pages/Terms.tsx";
@@ -32,6 +33,7 @@ export {
 // limite que não existe. Fora os bytes, são comentários que o Preact (que o
 // navegador usa desde 30/08) não espera na hidratação.
 const PAGINAS: Record<ChaveDeRota, ReactNode> = {
+  grupos: <Grupos />,
   captacao: <LandingSimples />,
   construcao: <Construcao />,
   obras: <Obras />,

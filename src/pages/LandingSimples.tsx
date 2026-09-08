@@ -27,13 +27,22 @@ const WhatsAppGlyph = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Desde 28/08/2026 esta tela é a PRINCIPAL e mora na raiz. Por dois dias ela
-// também respondeu em `/lp`, o endereço antigo; ele mandou tirar em 30/08 —
-// "se /lp é a mesma coisa que a principal, não tem pq existir".
+// ⚠️ EM 08/09/2026 ESTA TELA SAIU DA RAIZ e passou a morar em `/geral`, a
+// pedido dele: a porta da frente agora é a lista dos grupos (Grupos.tsx). Nada
+// mudou aqui dentro — mesmo desenho, mesmo texto e **o mesmo pixel**. O que
+// mudou é o endereço e duas linhas do head, logo abaixo.
 //
-// ⚠️ Este head PRECISA continuar espelhando o que está escrito no index.html:
-// o GitHub Pages entrega aquele HTML estático, e quem não roda JS (parte dos
-// crawlers, preview de link) só vê aquilo. Mudou aqui? Mudar lá também.
+// 🔴 Esta é a página de anúncio do público geral: campanha que apontava para
+// `apromofy.online/` precisa apontar para `apromofy.online/geral`, senão o
+// clique pago cai numa página sem pixel nenhum.
+//
+// Antes disso ela foi a raiz desde 28/08/2026, e por dois dias respondeu também
+// em `/lp`, o endereço antigo; ele mandou tirar em 30/08 — "se /lp é a mesma
+// coisa que a principal, não tem pq existir".
+//
+// ⚠️ O head do `index.html` NÃO espelha mais este: aquele arquivo é o template
+// de todas as rotas e as tags `data-rh` dele são as da RAIZ, que hoje é a lista
+// de grupos. Mudou o head de Grupos.tsx? Mudar o index.html junto — e não este.
 const LandingSimplesHead = () => (
   <Helmet>
     <title>Promofy — Ofertas e Cupons no seu WhatsApp</title>
@@ -41,9 +50,14 @@ const LandingSimplesHead = () => (
       name="description"
       content="Cupons, achadinhos e ofertas com curadoria direto no seu WhatsApp. Grátis, sem spam, e você sai quando quiser."
     />
-    <link rel="canonical" href="https://apromofy.online/" />
+    {/* `noindex` pela mesma razão da /ofertas: esta página e a raiz falam do
+        MESMO assunto, e indexadas as duas disputariam a mesma busca. Quem fica
+        com o orgânico é a raiz, que mostra os dois grupos; esta vive de clique
+        pago e não precisa de posição. */}
+    <meta name="robots" content="noindex, follow" />
+    <link rel="canonical" href="https://apromofy.online/geral" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://apromofy.online/" />
+    <meta property="og:url" content="https://apromofy.online/geral" />
     <meta property="og:title" content="Promofy — Ofertas e Cupons no seu WhatsApp" />
     <meta
       property="og:description"
